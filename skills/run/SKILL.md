@@ -112,7 +112,11 @@ background 워커마다:
 ## 단계 4 — 검토 (REVIEW)
 
 - 이 스킬의 베이스 디렉토리에 있는 `review-rubric.md`를 Read로 읽는다(이 단계 첫 진입 시 1회).
-- 워커 반환물을 그 워커의 **완료조건** + 루브릭으로 평가 → **PASS / REVISE / ESCALATE** 판정.
+- 워커의 `rabbits-result` 블록을 소비한다 — `self_check`·`evidence`·`outcome`을
+  그 워커의 **완료조건** + 루브릭으로 평가 → **PASS / REVISE / ESCALATE** 판정.
+  워커의 `self_check`는 참고 자료일 뿐, PASS는 대장이 근거로 직접 확정한다(워커 자칭 불가).
+- **결과 블록 누락·파손** 시 → 판정 없이 REVISE 1순위 사유("결과 블록 누락")로
+  SendMessage 반려한다. `outcome: BLOCKED`이면 루브릭대로 사다리 3단계(언블록)로.
 - 고위험 산출물(프로덕션 코드 변경, 통합 지점)은 **독립 리뷰어 워커**를 별도 파견해
   교차검증한다(확증편향 감소).
 
