@@ -10,9 +10,10 @@
 ## 설치 (로컬)
 
 ```bash
-claude --plugin-dir E:\2026.Toy\Rabbits
+claude --plugin-dir "E:\2026.Toy\Rabbits"
 ```
 
+- Git Bash 등 POSIX 셸에서는 경로를 반드시 따옴표로 감싼다(백슬래시 소비 방지).
 - 플러그인 파일 변경 반영: 세션 재시작 또는 세션 중 `/reload-plugins`.
 - 로드 확인: `claude plugin list` 또는 `/plugin` UI의 Installed 탭에 `rabbits`.
 
