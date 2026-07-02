@@ -14,16 +14,16 @@
   너의 결과 블록이 곧 산출물이다."**
 - **결과 블록 포맷** (모든 워커 공통):
 
-      ```rabbits-result
-      outcome: DONE            # DONE | BLOCKED
-      deliverable: <결과물 또는 위치>
-      evidence:
-        - <판정에 필요한 최소 근거 file:line / 수치>
-      self_check:
-        - <완료조건1>: ✓
-        - <완료조건2>: ✗ <이유>
-      notes: <있으면 1줄>
-      ```
+    ```rabbits-result
+    outcome: DONE            # DONE | BLOCKED
+    deliverable: <결과물 또는 위치>
+    evidence:
+      - <판정에 필요한 최소 근거 file:line / 수치>
+    self_check:
+      - <완료조건1>: ✓
+      - <완료조건2>: ✗ <이유>
+    notes: <있으면 1줄>
+    ```
 
   - `outcome`에 PASS/FAIL 같은 **최종 판정을 쓰지 말 것** — 판정은 대장 몫이다.
     워커는 `self_check`에 완료조건별 자가대조(✓/✗)만 적는다.
