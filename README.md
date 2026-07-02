@@ -63,10 +63,12 @@ rabbits/
       → 구현가 파견 + 대장 루브릭 검토 확인(독립 리뷰어 워커는 고위험 산출물에만 별도 파견).
 - [x] **T3 다단계**: `/rabbits:run 다음 3개를 각각 처리해줘 — (1) README 오탈자 점검 (2) skills/run/SKILL.md 단계 구조 요약 (3) docs/ 스펙의 확정 결정 D1~D6 재검증`
       → 한 메시지 병렬 파견(Agent 호출 3개) + 감독 + 통합 확인.
-- [ ] **T4 피드백 발동**: `/rabbits:run 좋은 커밋 메시지 가이드 문서를 docs/commit-guide.md로 작성해줘`
-      (완료조건이 일부러 느슨한 작업) → REVISE 판정 → SendMessage 코칭 루프가 실제로 도는지 확인.
-- [ ] **T5 감독 발동**: `/rabbits:run 이 리포 전체 문서의 상호참조를 조사해줘 — 조사 워커는 background로 파견하고 제한시간은 1분으로`
-      → ScheduleWakeup 장전 + T 경과 점검·개입 경로 확인.
+- [x] **T4 피드백 발동**: `/rabbits:run 좋은 커밋 메시지 가이드 문서를 docs/commit-guide.md로 작성해줘`
+      (완료조건이 일부러 느슨한 작업) → REVISE 판정 → SendMessage 코칭 → 같은 워커 재작업 →
+      재검토 PASS(1라운드) 실측 확인.
+- [x] **T5 감독 발동**: `/rabbits:run 이 리포 전체 문서의 상호참조를 조사해줘 — 조사 워커는 background로 파견하고 제한시간은 1분으로`
+      → ScheduleWakeup 장전·발화 + 완료알림 선착 시 타이머 무시 + T 경과 점검(상태폴링 미지원
+      하니스는 완료알림·maxTurns 폴백) + 연장 1회 + TaskStop 강제종료까지 실측 확인.
 
 ## 제약 / 노트
 
