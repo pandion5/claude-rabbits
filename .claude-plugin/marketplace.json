@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "rabbits",
+  "description": "자율 서브에이전트 오케스트레이션 rabbits 플러그인 로컬 마켓플레이스",
+  "owner": { "name": "YBPark" },
+  "plugins": [
+    {
+      "name": "rabbits",
+      "description": "자율 서브에이전트 오케스트레이션 — 대장이 기획하고 즉석 전문가 워커를 편성·파견·감독·검토·피드백한다",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}
