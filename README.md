@@ -7,15 +7,25 @@
 
 > 대장토끼가 작업 받으면 → 팀 짜고 → 파견하고 → 감독·검토·재작업시켜 → 끝내고 보고한다.
 
-## 설치 (로컬)
+## 설치
 
 ```bash
-claude --plugin-dir "E:\2026.Toy\Rabbits"
+claude plugin marketplace add pandion5/claude-rabbits
+claude plugin install rabbits@rabbits
+```
+
+- 로드 확인: `claude plugin list` 또는 `/plugin` UI의 Installed 탭에 `rabbits`.
+- 업데이트: `claude plugin update rabbits@rabbits`.
+
+### 로컬 개발 설치
+
+```bash
+claude --plugin-dir "<리포 경로>"
 ```
 
 - Git Bash 등 POSIX 셸에서는 경로를 반드시 따옴표로 감싼다(백슬래시 소비 방지).
 - 플러그인 파일 변경 반영: 세션 재시작 또는 세션 중 `/reload-plugins`.
-- 로드 확인: `claude plugin list` 또는 `/plugin` UI의 Installed 탭에 `rabbits`.
+  전역 설치본은 캐시 스냅샷 — 리포 변경 후 `claude plugin update rabbits@rabbits`.
 
 ## 사용
 

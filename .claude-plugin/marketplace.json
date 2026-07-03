@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "rabbits",
-  "description": "자율 서브에이전트 오케스트레이션 rabbits 플러그인 로컬 마켓플레이스",
+  "description": "자율 서브에이전트 오케스트레이션 rabbits 플러그인 마켓플레이스",
   "owner": { "name": "YBPark" },
   "plugins": [
     {
