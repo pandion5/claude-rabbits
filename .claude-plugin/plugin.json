@@ -1,6 +1,6 @@
 {
   "name": "rabbits",
   "description": "자율 서브에이전트 오케스트레이션 — 대장이 기획하고 즉석 전문가 워커를 편성·파견·감독·검토·피드백한다",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": { "name": "YBPark" }
 }
