@@ -117,6 +117,9 @@ rabbits/
 ├── .claude-plugin/
 │   ├── marketplace.json
 │   └── plugin.json
+├── hooks/
+│   ├── hooks.json        # Stop 이벤트 → 종료 가드 등록
+│   └── stop-guard.sh     # 마커 기반 종료 차단 (POSIX sh)
 ├── skills/run/
 │   ├── SKILL.md          # 6단계 프로토콜
 │   ├── archetypes.md     # 코어 8종 + 공통 규칙 + 확장 카탈로그 인덱스
@@ -150,6 +153,10 @@ rabbits/
 - 워커 상태폴링·강제종료(TaskList/TaskGet/TaskStop)와 실행 중 넛지는 하니스 의존 —
   안 되는 환경에서도 maxTurns + 완료알림 + 교체 투입으로 감독은 성립한다.
 - 런 상한: 워커 12(최대 18), 코칭 2라운드 — 소진 시 최선 결과로 보고.
+- **Stop hook 종료 가드**: `.rabbits/run-active.md` 마커가 있으면 종료를 차단해 단계 6 완료까지
+  강제 지속한다(하니스 8회 block 캡이 무한 루프를 막음). 마커는 `.gitignore` 등재(커밋 금지) —
+  크래시 잔존분이 커밋되면 리포 전체 세션을 차단하기 때문. Git Bash가 없는 Windows는 PowerShell
+  폴백이라 sh 스크립트가 동작하지 않을 수 있다 — 이 경우 가드는 미작동(한계).
 
 ## 서드파티 고지
 

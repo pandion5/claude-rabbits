@@ -1,0 +1,2 @@
+# rabbits 런 마커 — 세션 로컬, 크래시 잔존분이 커밋돼 리포 전체 세션을 차단하는 것을 방지
+.rabbits/run-active.md

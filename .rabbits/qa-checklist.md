@@ -9,8 +9,14 @@
 - README.md 파일 구조 트리에 `.claude-plugin/marketplace.json` 행이 있고 실제 디렉토리와 대응하는가(`grep marketplace.json README.md` + `.claude-plugin/` 실제 파일 목록 대조) — 트리에 marketplace.json·plugin.json 둘 다 나열, 실제 파일 2종과 1:1 일치
 - 확장 카탈로그 인덱스(archetypes.md 확장 카탈로그 표) 분야 라벨 12개가 대응 파일 H1에 부분 문자열로 포함되는가(archetypes-ext/*.md H1 12건 추출 후 각 라벨 포함 확인) — 12파일 전부 라벨⊆H1, 포함 불일치 0건
 - 인덱스 표 분야별 "(N)" 종수가 해당 archetypes-ext/<파일>.md에 나열된 실제 아키타입 개수와 일치하는가(셀 내 `/` 구분 나열 개수 vs 파일 내 `^## ` 섹션 수 12파일 대조) — 12파일 전부 표기 숫자=실제 수(9/9/9/8/7/10/8/7/6/7/6/7), 총합 93
-- 코어+확장 총계 산술이 맞는가(archetypes.md `^## N.` 코어 헤더 수=8, 인덱스 "(N)" 합=93, 8+93=101)와 팀 프리셋 수(teams.md `^## X팀` 헤더 수=5)가 README.md·archetypes.md의 "101종"·"5종" 표기와 일치하는가 — 8+93=101, 팀=5, 총계 수치 불일치 0건
+- 코어+확장 총계 산술이 맞는가(archetypes.md `^## N.` 코어 헤더 수=8, 인덱스 "(N)" 합=93, 8+93=101)와 팀 프리셋 수(teams.md `^## X팀` 헤더 수=5)가 README.md의 "101종"·"5종" 표기와 일치하는가 — 8+93=101, 팀=5, 총계 수치 불일치 0건
 - SKILL.md가 Read 참조하는 경로(단계 2: archetypes.md·archetypes-ext/<분야>.md·teams.md / 단계 4: review-rubric.md)가 실제 skills/run/ 아래 존재하는가(실재 파일 목록과 대조) — 참조 전부 실재, 확장 12파일명도 인덱스 "파일" 컬럼과 1:1 대응
 - 팀 프리셋 5종 명칭이 README.md 전문 팀 표·teams.md `## X팀` 헤더·SKILL.md 단계 1 팀 발동표 3곳에서 동일 집합인가(세 위치 팀명 추출 후 3-way 대조) — {테크팀,법무팀,보안팀,서치팀,QA팀} 순서 무관 동일, 철자 불일치 0건
 - 코어 아키타입 8종 한글명이 README.md 코어 표와 archetypes.md `## N. 이름 (영문)` 헤더 8개 사이 번호·명칭 모두 일치하는가(번호순 대조) — 8개명 두 위치에서 번호·철자 일치
-- 버전 문자열이 리포 활성 영역에서 `.claude-plugin/plugin.json` 단 한 곳에만 선언되는가(plugin.json의 version 값을 읽어 그 문자열을 json·md 전체에서 grep — 이력·인용 성격인 docs/·.superpowers/·이 체크리스트 자신은 제외) — 선언 매치 정확히 1건(plugin.json), 타 파일 버전 재선언 없음
+- 버전 문자열이 리포 활성 영역에서 `.claude-plugin/plugin.json` 단 한 곳에만 선언되는가(plugin.json의 version 값을 읽어 그 문자열을 json·md 전체에서 grep — 이력·인용 성격인 docs/·.superpowers/·이 체크리스트 자신, 별도 배포 단위인 codex/는 제외) — 선언 매치 정확히 1건(plugin.json), 타 파일 버전 재선언 없음
+
+## Stop hook 종료 가드
+
+- Stop hook 마커 부재/존재 2케이스 계약 — 마커 없으면 stdout 빈 값·exit 0, 마커 있으면 decision=="block"이고 reason 비어있지 않은 유효 JSON·exit 0 (검증: CLAUDE_PROJECT_DIR을 임시 디렉토리로 지정해 `sh hooks/stop-guard.sh` 실행 후 stdout을 `python -c "import json,sys; json.load(sys.stdin)"`로 파싱하고 exit code 확인)
+- hooks.json Stop 이벤트 스키마 정합 — hooks.Stop[0].hooks[0].type이 "command"이고 command가 stop-guard.sh를 가리키는 훅이 등록되어 있음 (검증: `python -c "import json; d=json.load(open('hooks/hooks.json',encoding='utf-8')); assert d['hooks']['Stop'][0]['hooks'][0]['type']=='command'"`)
+- SKILL.md 마커 생명주기 지시 존재 — 단계 0에 `.rabbits/run-active.md` 생성(Write) 지시, 단계 6에 최종 리포트 후 마커 삭제 지시가 명시되어 하니스 종료 차단을 오케스트레이터가 스스로 해제 가능 (검증: `grep -n "run-active.md" skills/run/SKILL.md`로 단계 0 생성 문맥과 단계 6 삭제 문맥 두 곳 모두 존재하는지 확인)
