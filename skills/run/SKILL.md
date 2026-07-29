@@ -112,6 +112,11 @@ argument-hint: <완료까지 자율로 처리할 작업>
 ## 단계 3.5 — 감독 (WATCHDOG)
 
 - background 파견 직후 `ScheduleWakeup(T)` 장전(reason에 워커명). 여러 워커면 최솟값 T 하나로 합장전.
+- **대기 중 턴 종료 규약**: 완료알림을 기다리며 턴을 정상 종료할 때는 `.rabbits/run-active.md`를
+  `.rabbits/run-waiting.md`로 개명(mv)해 Stop hook 가드를 일시 해제한다 — 개명 없이 대기하면
+  가드가 매 턴 종료를 반복 차단해 하니스 8회 block 캡까지 턴을 낭비한다. 완료알림 도착이나
+  사용자 발화로 작업을 재개하면 즉시 `.rabbits/run-waiting.md`를 `.rabbits/run-active.md`로
+  원복해 가드를 되살린다.
 - **완료알림 도착**(자동) → 타이머 무시, 단계 4로. [정상경로, 대부분]
 - **알림 없이 T 경과** → 점검: 상태 툴 되는 하니스면 TaskList/TaskGet 생존 확인.
   진행 중 판단 → T 연장(1회, 원래 T의 절반) + 재장전 — maxTurns가 결국 자가종료시키니 무한 아님.

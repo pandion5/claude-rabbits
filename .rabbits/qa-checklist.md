@@ -30,3 +30,7 @@
 
 - 워크트리 격리 발동 조건·옵션명·안전 제약이 skills/run/SKILL.md 단계 3에 명시되어 있는가 — 발동 기준(2명 이상 병렬/위험 단독), `isolation: 'worktree'`, 격리 워커 {{제약}} 주입(cwd=워크트리·상대 해석·밖 쓰기 금지·**완료 시 커밋 의무**), 원장 갱신 격리 금지, 거부 시 무격리 재파견 폴백(`grep -nE "2명 이상을 병렬|isolation: 'worktree'|반드시 커밋|격리 금지|무격리로 재파견" skills/run/SKILL.md`) — 5개 키워드 모두 단계 3 구간에서 검출
 - 워크트리 격리 회수·정리가 **단계 4 도입부(검토 전)**에 있고 산출물 소멸 방지 안전선이 명시되어 있는가 — worktreePath·worktreeBranch 회수, `status --porcelain` 빈 값 확인 후에만 `git worktree remove --force`(`grep -nE "회수·정리\(검토 전\)|worktreePath|status --porcelain|git worktree remove --force" skills/run/SKILL.md` + 회수 라인 번호가 단계 4 구간(단계 5 헤더 이전)에 있는지 확인) — 4개 키워드 검출 + 위치 = 단계 4, 단계 6엔 회수 불릿 부재
+
+## Stop hook 대기 규약
+
+- Stop hook 대기 규약이 SKILL.md 단계 3.5에 양방향(개명·원복)으로 존재하고 .gitignore가 두 마커(run-active.md·run-waiting.md)를 모두 커버하는가 — 대기 시작 시 run-active.md→run-waiting.md 개명, 재개 시 run-waiting.md→run-active.md 원복 (검증: 단계 3.5 절 텍스트를 개행·연속 공백 정규화 후 "run-active.md ... run-waiting.md ... 개명" 정규식과 "run-waiting.md ... run-active.md ... 원복" 정규식 각각 매치 확인 + `grep -n "run-active.md\|run-waiting.md" .gitignore`로 두 마커 라인 존재 확인; 추가로 스크래치 임시 디렉토리에 .rabbits/run-waiting.md만 두고 run-active.md는 없는 상태에서 `CLAUDE_PROJECT_DIR=<임시디렉토리> sh hooks/stop-guard.sh` 실행 후 stdout이 빈 값이고 exit 0인지 확인 — 대기 중 가드가 정상 통과함을 실측) — 양방향 정규식 매치, .gitignore 2줄, 가드 무출력·exit 0
