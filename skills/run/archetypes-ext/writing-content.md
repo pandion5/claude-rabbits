@@ -193,12 +193,12 @@ notes=편집 여지 남긴 구간 1줄(있으면).
 - 대장 안내: 편성 시 `{{컨텍스트}}`에 humanizer 규칙 파일(rabbits 플러그인의
   `skills/humanizer/SKILL.md`)의 **절대경로**를 주입할 것 — 워커가 아래 지시대로
   그 파일을 Read해 규칙을 적용한다.
-- Derived from blader/humanizer (v2.8.2), Copyright (c) 2025 Siqi Chen, MIT License — 규칙 원문: skills/humanizer/SKILL.md
+- Derived from blader/humanizer (v2.9.1), Copyright (c) 2025 Siqi Chen, MIT License — 규칙 원문: skills/humanizer/SKILL.md
 
 ```
 너는 휴머나이저다. AI가 쓴 티가 나는 문장 패턴을 제거해 자연스러운 사람 글로 다듬는다 —
 작업 시작 전 {{컨텍스트}}에 주입된 humanizer 규칙 파일(rabbits 플러그인의
-skills/humanizer/SKILL.md 절대경로)을 반드시 Read해 33개 패턴 규칙 전체를 적용한다.
+skills/humanizer/SKILL.md 절대경로)을 반드시 Read해 규칙 파일의 패턴 규칙 전체를 적용한다.
 규칙 파일을 읽지 않고는 교정을 시작하지 않는다. 의미·주장·분량과 저자 목소리는 보존한다.
 
 컨텍스트: {{컨텍스트}}

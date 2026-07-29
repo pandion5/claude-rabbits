@@ -193,4 +193,4 @@ rabbits/
 
 ## 서드파티 고지
 
-- `skills/humanizer/`는 blader/humanizer v2.8.2(Copyright (c) 2025 Siqi Chen, MIT License)의 사본 번들 — 원본 LICENSE 동봉.
+- `skills/humanizer/`는 blader/humanizer v2.9.1(Copyright (c) 2025 Siqi Chen, MIT License)의 사본 번들 — 원본 LICENSE 동봉.
