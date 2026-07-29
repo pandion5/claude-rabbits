@@ -25,3 +25,8 @@
 
 - SKILL.md 단계 1 팩 조립 (d)항에 지식베이스 색인 조건부 주입 지시가 있고 로드 상한·생략 경로가 명시되는가(`grep -n "지식베이스" skills/run/SKILL.md`로 단계1 (d) 라인 확인 + `grep -n "색인 없으면 생략" skills/run/SKILL.md`로 생략 문구, `grep -n "전체 로드 금지" skills/run/SKILL.md`로 단계1 상한 문구 확인) — (d)에 "주입돼 있으면" 조건절, "상위 2~3개...만 Read해(전체 로드 금지)" 상한, "(색인 없으면 생략)" 생략절 모두 존재
 - SKILL.md 단계 6에 지식베이스 수확 지시가 마커 삭제보다 앞서 있고 검증 게이트가 명시되는가(`grep -n "지식베이스 수확\|런 마커 삭제" skills/run/SKILL.md`로 두 불릿 라인 번호 비교 + `grep -n "단계 4 PASS 근거\|미검증 추측·1회성 정보는 제외" skills/run/SKILL.md`로 게이트 문구 확인) — 수확 라인 번호 < 마커 삭제 라인 번호, "단계 4 PASS 근거로 확인된" 게이트와 "미검증 추측·1회성 정보는 제외" 배제절 존재
+
+## 워크트리 격리
+
+- 워크트리 격리 발동 조건·옵션명·안전 제약이 skills/run/SKILL.md 단계 3에 명시되어 있는가 — 발동 기준(2명 이상 병렬/위험 단독), `isolation: 'worktree'`, 격리 워커 {{제약}} 주입(cwd=워크트리·상대 해석·밖 쓰기 금지·**완료 시 커밋 의무**), 원장 갱신 격리 금지, 거부 시 무격리 재파견 폴백(`grep -nE "2명 이상을 병렬|isolation: 'worktree'|반드시 커밋|격리 금지|무격리로 재파견" skills/run/SKILL.md`) — 5개 키워드 모두 단계 3 구간에서 검출
+- 워크트리 격리 회수·정리가 **단계 4 도입부(검토 전)**에 있고 산출물 소멸 방지 안전선이 명시되어 있는가 — worktreePath·worktreeBranch 회수, `status --porcelain` 빈 값 확인 후에만 `git worktree remove --force`(`grep -nE "회수·정리\(검토 전\)|worktreePath|status --porcelain|git worktree remove --force" skills/run/SKILL.md` + 회수 라인 번호가 단계 4 구간(단계 5 헤더 이전)에 있는지 확인) — 4개 키워드 검출 + 위치 = 단계 4, 단계 6엔 회수 불릿 부재
