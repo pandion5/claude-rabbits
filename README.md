@@ -1,5 +1,7 @@
 # rabbits 🐇
 
+*English version: [README.en.md](README.en.md)*
+
 자율 서브에이전트 오케스트레이션 Claude Code 플러그인.
 
 메인 세션이 **대장(오케스트레이터)**이 되어 작업을 기획하고, 즉석 일회용 전문가
