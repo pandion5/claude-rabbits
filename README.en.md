@@ -174,6 +174,25 @@ No `agents/` folder — workers are improvised and disposable (not saved to file
       ScheduleWakeup armed and fired + completion notification wins the race when it arrives before
       the timer + elapsed-time checks (harnesses without status-polling support fall back to
       completion notifications and maxTurns) + one extension + forced termination via TaskStop.
+- [x] **T6 — stop guard (0.8.0)**: attempt to end the turn while the `.rabbits/run-active.md`
+      marker exists → the Stop hook blocks with decision:block and surfaces the guidance message;
+      deleting the marker allows a normal stop. Repeated blocks observed empirically in interactive
+      sessions (not triggered in one-shot `claude -p` sessions — known limitation).
+- [x] **T7 — knowledge-base integration (0.9.0)**: run `/rabbits:run` in a session with an injected
+      knowledge index (stage 1 pack load → stage 6 harvest) → matching know-how injected into the
+      stage 1 pack (e.g. preemptively avoiding the hook `.ps1` BOM pitfall) + verified know-how
+      written back to the wiki via the stage 6 harvest, confirmed empirically.
+- [x] **T8 — worktree isolation (0.10.0)**: dispatch a worker with `isolation: 'worktree'`
+      → the worker operates in `<repo>/.claude/worktrees/agent-<id>`, the return metadata exposes
+      worktreePath·worktreeBranch, and cleanup (remove + branch delete) runs only after a
+      `git status --porcelain` check — confirmed empirically.
+- [x] **T9 — waiting protocol (0.10.1)**: while waiting on background workers, rename the marker to
+      run-waiting.md → zero Stop-hook blocks during the wait, marker restored on resume — confirmed
+      empirically (contrast: three consecutive blocks before the protocol existed).
+- [x] **T10 — backlog chaining (0.11.0)**: with pending items in `.rabbits/backlog.md`, run
+      `/rabbits:run` with no arguments → topmost pending item adopted (n/m narration) → consumed as
+      `- [x]` on completion (unresolved runs annotated with a reason) → chaining continues with the
+      marker kept alive while items remain — confirmed empirically.
 
 ## Constraints / notes
 
@@ -206,5 +225,5 @@ No `agents/` folder — workers are improvised and disposable (not saved to file
 
 ## Third-party notices
 
-- `skills/humanizer/` bundles a copy of blader/humanizer v2.8.2 (Copyright (c) 2025 Siqi Chen, MIT
+- `skills/humanizer/` bundles a copy of blader/humanizer v2.9.1 (Copyright (c) 2025 Siqi Chen, MIT
   License) — the original LICENSE is included.
