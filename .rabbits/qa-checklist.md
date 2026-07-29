@@ -34,3 +34,8 @@
 ## Stop hook 대기 규약
 
 - Stop hook 대기 규약이 SKILL.md 단계 3.5에 양방향(개명·원복)으로 존재하고 .gitignore가 두 마커(run-active.md·run-waiting.md)를 모두 커버하는가 — 대기 시작 시 run-active.md→run-waiting.md 개명, 재개 시 run-waiting.md→run-active.md 원복 (검증: 단계 3.5 절 텍스트를 개행·연속 공백 정규화 후 "run-active.md ... run-waiting.md ... 개명" 정규식과 "run-waiting.md ... run-active.md ... 원복" 정규식 각각 매치 확인 + `grep -n "run-active.md\|run-waiting.md" .gitignore`로 두 마커 라인 존재 확인; 추가로 스크래치 임시 디렉토리에 .rabbits/run-waiting.md만 두고 run-active.md는 없는 상태에서 `CLAUDE_PROJECT_DIR=<임시디렉토리> sh hooks/stop-guard.sh` 실행 후 stdout이 빈 값이고 exit 0인지 확인 — 대기 중 가드가 정상 통과함을 실측) — 양방향 정규식 매치, .gitignore 2줄, 가드 무출력·exit 0
+
+## 백로그 규약
+
+- SKILL.md 단계 0에 백로그 채택 규약 4요소(무인자 조건·최상단 미완료·나레이션·사용자 요청 폴백)가 모두 존재하는가(`grep -n "backlog.md\|최상단 미완료 1개\|나레이션\|기존대로 사용자에게 작업만 요청" skills/run/SKILL.md`로 단계 0 구간에 무인자 트리거·최상단 1개 채택·"n번째/총 m건" 나레이션·폴백 4개 문구 매치 확인) — 4요소 전부 단계 0 구간 내 존재, 누락 0건
+- SKILL.md 단계 6에 체크→연쇄(마커 유지)→소진/상한 시만 삭제 순서와 실패 표기·연쇄 상한이 있는가(`grep -n "백로그 처리\|런 마커 삭제" skills/run/SKILL.md`로 두 불릿 라인 번호 비교 + `grep -n "미해결: 사유\|연쇄는 한 호출당 최대 10건\|백로그가 비었거나" skills/run/SKILL.md`로 실패 표기·상한·종료 조건 확인) — 백로그 처리 라인 < 마커 삭제 라인, 실패 표기(`- [x] 항목 (미해결: 사유 1구)`)·상한 10건·"비었거나 연쇄 상한" 종료 조건 3문구 존재
