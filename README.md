@@ -154,6 +154,21 @@ rabbits/
 - [x] **T5 감독 발동**: `/rabbits:run 이 리포 전체 문서의 상호참조를 조사해줘 — 조사 워커는 background로 파견하고 제한시간은 1분으로`
       → ScheduleWakeup 장전·발화 + 완료알림 선착 시 타이머 무시 + T 경과 점검(상태폴링 미지원
       하니스는 완료알림·maxTurns 폴백) + 연장 1회 + TaskStop 강제종료까지 실측 확인.
+- [x] **T6 종료 가드(0.8.0)**: `.rabbits/run-active.md` 마커 존재 상태에서 턴 종료 시도
+      → Stop hook이 decision:block으로 차단·안내 문구 노출, 마커 삭제 시 정상 종료 확인.
+      인터랙티브 세션에서 연속 차단 다수 실측(`claude -p` 단발 세션에선 미발동 — 한계).
+- [x] **T7 지식베이스 연동(0.9.0)**: 색인 주입 세션에서 `/rabbits:run` 실행(단계 1 팩 로드 →
+      단계 6 수확) → 단계 1에서 매칭 노하우 주입(예: 훅 .ps1 BOM 함정 선제 차단 실증) +
+      단계 6 수확으로 검증 노하우가 위키에 기록됨을 실측 확인.
+- [x] **T8 워크트리 격리(0.10.0)**: 워커 파견 시 `isolation: 'worktree'` 지정
+      → 워커가 `<리포>/.claude/worktrees/agent-<id>`에서 작업, 반환 메타 worktreePath·
+      worktreeBranch 확인, `git status --porcelain` 확인 후 remove·브랜치 삭제 정리 실측 확인.
+- [x] **T9 대기 규약(0.10.1)**: background 워커 대기 시 마커를 run-waiting.md로 개명
+      → 대기 중 Stop hook 차단 0회, 재개 시 마커 원복 실측 확인
+      (규약 적용 전 3연속 차단과 대비).
+- [x] **T10 백로그 연쇄(0.11.0)**: `.rabbits/backlog.md`에 미완료 항목이 있는 상태에서
+      무인자 `/rabbits:run` → 최상단 미완료 채택(n/m 나레이션) → 완료 후 `- [x]` 소비
+      (미해결 시 사유 병기) → 잔여 시 마커 유지 상태로 연쇄 실행됨을 실측 확인.
 
 ## 제약 / 노트
 
