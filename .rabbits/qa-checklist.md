@@ -67,3 +67,7 @@
 
 - skills/run/SKILL.md 단계 1 컨텍스트 팩에 (e) 리포별 config 조건부 로드 3요소가 모두 있는가 — "있으면 Read", "전역 기본값 대체", "없으면 생략+대장 임의 생성 금지" 3종이 단계 1 구간 안에서 각 1회 이상 매칭 (검증: `awk '/^## 단계 1/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' ' | grep -oE 'config\.md`가 있으면 Read|전역 기본값을 \*\*대체\*\*한다|없으면 생략, 대장이 임의 생성하지 않는다' | sort -u | wc -l` → 3)
 - 코드 표준의 config 대체 우선순위가 두 파일에 모두 명시돼 있는가 — SKILL.md "## 코드 산출물 표준" 절과 archetypes.md "## 공통 규칙" 절 각 구간에서 config.md 우선/대체 문구가 1회 이상 매칭돼 적중 파일 수 2 (검증: 각 파일을 `awk -v h='^## <헤더>' '$0~h{fl=1;next} fl&&/^## /{exit} fl' <파일> | tr '\n' ' ' | grep -oE 'config\.md.{0,40}(대체한다|우선\*\*한다)' | wc -l` ≥1 인 파일 수 세기 → 2)
+
+## 진단 피드백 루프 사다리
+
+- 디버거 아키타입 템플릿에 진단 피드백 루프 사다리가 규정되어 있는가 — `skills/run/archetypes.md`의 `## 7. 디버거` 구간 안에 사다리 6단계 마커(①~⑥) 6개가 모두 있고, "위에서부터 가능한 첫 수단"·"가설 단계로 진행 금지"·"outcome: BLOCKED"·"need:"·"임시 계측·디버그 코드 전량 제거"·"self_check" 6종 키워드가 전부 존재한다 (검증: `S=$(awk '/^## 7\. 디버거/{f=1;print;next} f&&/^## /{exit} f' skills/run/archetypes.md | tr '\n' ' '); L=$(printf '%s' "$S" | grep -oE '①|②|③|④|⑤|⑥' | wc -l); K=$(printf '%s' "$S" | grep -oE '위에서부터 가능한 첫 수단|가설 단계로 진행 금지|outcome: BLOCKED|need:|임시 계측·디버그 코드 전량 제거|self_check' | sort -u | wc -l); [ "$L" -eq 6 ] && [ "$K" -eq 6 ] && echo PASS || echo FAIL` → `PASS`)
