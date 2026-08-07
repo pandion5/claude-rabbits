@@ -57,3 +57,8 @@
 
 - SKILL.md 단계 4 구간에 2축 리뷰 규칙 4요소가 모두 존재한다 — 리뷰어 2명 병렬 파견·Standards/Spec 두 축 정의·병합·재순위 금지·저위험 미발동이 각 1건 이상 매칭돼 총 4건 (검증: `awk '/^## 단계 4/{f=1;next} /^## /{f=0} f' skills/run/SKILL.md | tr '\n' ' ' | grep -oE '리뷰어 2명을 병렬 파견|Standards 축.*Spec 축|병합·재순위 금지|저위험.{0,40}미발동' | wc -l` 결과가 4)
 - review-rubric.md에 "## 2축 분리 리뷰" 절이 존재하고 그 구간 안에 축↔루브릭 매핑과 판정 결합 규칙이 명시돼 있다 — Standards=5·4, Spec=1·2·3, "한 축이라도 미달이면 그 축 사유로 REVISE"가 각 1건씩 총 3건 (검증: `awk '/^## 2축 분리 리뷰/{f=1;next} /^## /{f=0} f' skills/run/review-rubric.md | tr '\n' ' ' | grep -oE 'Standards 축\*\* = 루브릭 \*\*5·4|Spec 축\*\* = 루브릭 \*\*1·2·3|판정 결합.{0,60}REVISE' | wc -l` 결과가 3)
+
+## 사전 스코프 계약
+
+- archetypes.md 공통 규칙 절에 공통 슬롯 6종 선언·"제외범위 준수"·"durability(썩지 않는 서술)" 3요소가 모두 존재한다 — 슬롯 토큰 6종 전원(컨텍스트/작업/제약/완료조건/출력형식/제외범위), 규칙 마커 5종(공통 슬롯 6종·제외범위 준수·durability·줄 번호·evidence) 전원 등장 (`SEC=$(awk '/^## 공통 규칙/{f=1;next} f&&/^## /{exit} f' skills/run/archetypes.md | tr '\n' ' '); echo "$SEC" | grep -oE '\{\{(컨텍스트|작업|제약|완료조건|출력형식|제외범위)\}\}' | sort -u | wc -l` = 6, `echo "$SEC" | grep -oE '공통 슬롯 6종|제외범위 준수|durability|줄 번호|evidence' | sort -u | wc -l` = 5)
+- SKILL.md 단계 2(편성) 구간에 `{{제외범위}}`가 조립 슬롯으로 포함돼 있다 — 단계 2 구간 안에서 조립 슬롯 6종이 모두 나타나고 `{{제외범위}}`가 1회 이상 등장 (`SEC=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); echo "$SEC" | grep -oE '\{\{(컨텍스트|작업|제약|완료조건|출력형식|제외범위)\}\}' | sort -u | wc -l` = 6, `echo "$SEC" | grep -oE '\{\{제외범위\}\}' | wc -l` >= 1)
