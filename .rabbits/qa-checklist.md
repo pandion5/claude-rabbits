@@ -62,3 +62,8 @@
 
 - archetypes.md 공통 규칙 절에 공통 슬롯 6종 선언·"제외범위 준수"·"durability(썩지 않는 서술)" 3요소가 모두 존재한다 — 슬롯 토큰 6종 전원(컨텍스트/작업/제약/완료조건/출력형식/제외범위), 규칙 마커 5종(공통 슬롯 6종·제외범위 준수·durability·줄 번호·evidence) 전원 등장 (`SEC=$(awk '/^## 공통 규칙/{f=1;next} f&&/^## /{exit} f' skills/run/archetypes.md | tr '\n' ' '); echo "$SEC" | grep -oE '\{\{(컨텍스트|작업|제약|완료조건|출력형식|제외범위)\}\}' | sort -u | wc -l` = 6, `echo "$SEC" | grep -oE '공통 슬롯 6종|제외범위 준수|durability|줄 번호|evidence' | sort -u | wc -l` = 5)
 - SKILL.md 단계 2(편성) 구간에 `{{제외범위}}`가 조립 슬롯으로 포함돼 있다 — 단계 2 구간 안에서 조립 슬롯 6종이 모두 나타나고 `{{제외범위}}`가 1회 이상 등장 (`SEC=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); echo "$SEC" | grep -oE '\{\{(컨텍스트|작업|제약|완료조건|출력형식|제외범위)\}\}' | sort -u | wc -l` = 6, `echo "$SEC" | grep -oE '\{\{제외범위\}\}' | wc -l` >= 1)
+
+## 리포별 설정
+
+- skills/run/SKILL.md 단계 1 컨텍스트 팩에 (e) 리포별 config 조건부 로드 3요소가 모두 있는가 — "있으면 Read", "전역 기본값 대체", "없으면 생략+대장 임의 생성 금지" 3종이 단계 1 구간 안에서 각 1회 이상 매칭 (검증: `awk '/^## 단계 1/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' ' | grep -oE 'config\.md`가 있으면 Read|전역 기본값을 \*\*대체\*\*한다|없으면 생략, 대장이 임의 생성하지 않는다' | sort -u | wc -l` → 3)
+- 코드 표준의 config 대체 우선순위가 두 파일에 모두 명시돼 있는가 — SKILL.md "## 코드 산출물 표준" 절과 archetypes.md "## 공통 규칙" 절 각 구간에서 config.md 우선/대체 문구가 1회 이상 매칭돼 적중 파일 수 2 (검증: 각 파일을 `awk -v h='^## <헤더>' '$0~h{fl=1;next} fl&&/^## /{exit} fl' <파일> | tr '\n' ' ' | grep -oE 'config\.md.{0,40}(대체한다|우선\*\*한다)' | wc -l` ≥1 인 파일 수 세기 → 2)
