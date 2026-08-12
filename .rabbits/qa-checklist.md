@@ -23,13 +23,13 @@
 
 ## 지식베이스 연동
 
-- SKILL.md 단계 1 팩 조립 (d)항에 지식베이스 색인 조건부 주입 지시가 있고 로드 상한·생략 경로가 명시되는가(`grep -n "지식베이스" skills/run/SKILL.md`로 단계1 (d) 라인 확인 + `grep -n "색인 없으면 생략" skills/run/SKILL.md`로 생략 문구, `grep -n "전체 로드 금지" skills/run/SKILL.md`로 단계1 상한 문구 확인) — (d)에 "주입돼 있으면" 조건절, "상위 2~3개...만 Read해(전체 로드 금지)" 상한, "(색인 없으면 생략)" 생략절 모두 존재
+- 지식베이스 조건부 주입 규약이 실재하고 SKILL에 발동 조건·Read 지시가 잔류하는가(라우터화 반영) — SKILL.md 단계 1에 "지식베이스 색인이 주입돼 있거나" 조건절 + `context-sources.md` Read 지시가 있고, 상세 3요소("주입돼 있으면" 조건·"상위 2~3개…(전체 로드 금지)" 상한·"(색인 없으면 생략)" 생략절)는 `skills/run/context-sources.md`에서 확인 (검증: `grep -c "context-sources.md" skills/run/SKILL.md` ≥1 + `grep -cE "주입돼 있으면|전체 로드 금지|색인 없으면 생략" skills/run/context-sources.md` = 3 — 전체 로드 금지는 context-sources.md 한정 검색으로 archetypes-ext 문맥 오탐 차단)
 - SKILL.md 단계 6에 지식베이스 수확 지시가 마커 삭제보다 앞서 있고 검증 게이트가 명시되는가(`grep -n "지식베이스 수확\|런 마커 삭제" skills/run/SKILL.md`로 두 불릿 라인 번호 비교 + `grep -n "단계 4 PASS 근거\|미검증 추측·1회성 정보는 제외" skills/run/SKILL.md`로 게이트 문구 확인) — 수확 라인 번호 < 마커 삭제 라인 번호, "단계 4 PASS 근거로 확인된" 게이트와 "미검증 추측·1회성 정보는 제외" 배제절 존재
 
 ## 워크트리 격리
 
-- 워크트리 격리 발동 조건·옵션명·안전 제약이 skills/run/SKILL.md 단계 3에 명시되어 있는가 — 발동 기준(2명 이상 병렬/위험 단독), `isolation: 'worktree'`, 격리 워커 {{제약}} 주입(cwd=워크트리·상대 해석·밖 쓰기 금지·**완료 시 커밋 의무**), 원장 갱신 격리 금지, 거부 시 무격리 재파견 폴백(`grep -nE "2명 이상을 병렬|isolation: 'worktree'|반드시 커밋|격리 금지|무격리로 재파견" skills/run/SKILL.md`) — 5개 키워드 모두 단계 3 구간에서 검출
-- 워크트리 격리 회수·정리가 **단계 4 도입부(검토 전)**에 있고 산출물 소멸 방지 안전선이 명시되어 있는가 — worktreePath·worktreeBranch 회수, `status --porcelain` 빈 값 확인 후에만 `git worktree remove --force`(`grep -nE "회수·정리\(검토 전\)|worktreePath|status --porcelain|git worktree remove --force" skills/run/SKILL.md` + 회수 라인 번호가 단계 4 구간(단계 5 헤더 이전)에 있는지 확인) — 4개 키워드 검출 + 위치 = 단계 4, 단계 6엔 회수 불릿 부재
+- 워크트리 격리 규약이 실재하고 SKILL 단계 3에 발동 조건·Read 지시가 잔류하는가(라우터화 반영) — SKILL.md 단계 3 구간에 "2명 이상을 병렬" 발동 기준 + `worktree.md` Read 지시 2건, 상세 5키워드(`isolation: 'worktree'`·반드시 커밋·격리 금지·무격리로 재파견·환경 스킬/CLI 우선)는 `skills/run/worktree.md`에서 확인 (검증: SKILL 단계 3 구간에서 `grep -cE "2명 이상을 병렬|worktree\.md"` ≥2 + `grep -cE "isolation: 'worktree'|반드시 커밋|격리 금지|무격리로 재파견" skills/run/worktree.md` ≥4)
+- 워크트리 회수·정리가 단계 4 도입부(검토 전)에 위치하고 절차 상세가 형제 파일에 실재하는가(라우터화 반영) — SKILL.md에 "격리 워커 회수·정리(검토 전)" 불릿이 단계 4 구간(단계 5 헤더 이전)에 있고 단계 6엔 회수 불릿 부재, 절차 3요소(worktreePath·`status --porcelain`·`git worktree remove --force`)는 `skills/run/worktree.md`에서 확인 (검증: `grep -n "회수·정리(검토 전)" skills/run/SKILL.md` 라인이 단계 4 구간 내 + `grep -cE "worktreePath|status --porcelain|git worktree remove --force" skills/run/worktree.md` = 3)
 
 ## Stop hook 대기 규약
 
@@ -37,8 +37,8 @@
 
 ## 백로그 규약
 
-- SKILL.md 단계 0에 백로그 채택 규약 4요소(무인자 조건·최상단 미완료·나레이션·사용자 요청 폴백)가 모두 존재하는가(`grep -n "backlog.md\|최상단 미완료 1개\|나레이션\|기존대로 사용자에게 작업만 요청" skills/run/SKILL.md`로 단계 0 구간에 무인자 트리거·최상단 1개 채택·"n번째/총 m건" 나레이션·폴백 4개 문구 매치 확인) — 4요소 전부 단계 0 구간 내 존재, 누락 0건
-- SKILL.md 단계 6에 체크→연쇄(마커 유지)→소진/상한 시만 삭제 순서와 실패 표기·연쇄 상한이 있는가(`grep -n "백로그 처리\|런 마커 삭제" skills/run/SKILL.md`로 두 불릿 라인 번호 비교 + `grep -n "미해결: 사유\|연쇄는 한 호출당 최대 10건\|백로그가 비었거나" skills/run/SKILL.md`로 실패 표기·상한·종료 조건 확인) — 백로그 처리 라인 < 마커 삭제 라인, 실패 표기(`- [x] 항목 (미해결: 사유 1구)`)·상한 10건·"비었거나 연쇄 상한" 종료 조건 3문구 존재
+- 백로그 채택 규약이 실재하고 SKILL 단계 0에 트리거·Read 지시가 잔류하는가(라우터화 반영) — SKILL.md 단계 0에 "작업이 비어 있으면 `.rabbits/backlog.md`" 트리거 + `backlog.md` Read 지시, 채택 4요소(무인자 조건·최상단 미완료 1개·n/m 나레이션·사용자 요청 폴백)는 `skills/run/backlog.md`에서 확인 (검증: SKILL 단계 0 구간에 backlog.md 참조 ≥1 + `grep -cE "최상단 미완료 1개|기존대로 사용자에게 작업만 요청" skills/run/backlog.md` = 2)
+- 백로그 처리가 마커 삭제보다 앞서고 소비·연쇄 규약이 형제 파일에 실재하는가(라우터화 반영) — SKILL.md에서 "백로그 처리" 라인 < "런 마커 삭제" 라인이고 종료 조건("백로그가 비었거나")이 SKILL에 잔류, 실패 표기(`- [x] 항목 (미해결: 사유 1구)`)·연쇄 상한 10건은 `skills/run/backlog.md`에서 확인 (검증: `grep -n "백로그 처리\|런 마커 삭제" skills/run/SKILL.md` 라인 번호 비교 + `grep -cE "미해결: 사유|최대 10건" skills/run/backlog.md` = 2)
 
 ## QC팀 프리셋
 
@@ -47,7 +47,7 @@
 
 ## 워크트리 생성 우선 규칙
 
-- SKILL.md 단계 3(파견) 구간에 워크트리 생성 소프트 우선 규칙 3요소(①환경 스킬/CLI 로드 시 그 방식 우선 조건, ②버전 매칭 가이드 조회 의무 및 추측 호출 금지, ③미제공/리졸브 실패 시 isolation:'worktree' 폴백)가 모두 존재하는가(`grep -nE "환경 스킬/CLI가 로드돼 있으면 그 방식을 우선|버전 매칭 가이드를 조회해 사용하고\(추측 호출 금지\)|isolation: 'worktree'.*방식으로 폴백" skills/run/SKILL.md` 실행 후 매치 3건이 전부 단계 3 구간(`^## 단계 3 ` 헤더~`^## 단계 3.5` 헤더 이전) 내인지 확인) — 3개 패턴 모두 단계 3 구간에서 매치
+- 워크트리 생성 소프트 우선 규칙 3요소가 형제 파일에 실재하는가(라우터화 반영) — ①환경 스킬/CLI 로드 시 우선 ②버전 매칭 가이드 조회·추측 호출 금지 ③미제공/실패 시 `isolation: 'worktree'` 폴백이 `skills/run/worktree.md`에 전부 존재하고, SKILL.md 단계 3엔 발동 조건 + `worktree.md` Read 지시가 잔류 (검증: `grep -cE "환경 스킬/CLI가 로드돼 있으면 그 방식을 우선|버전 매칭 가이드를 조회해 사용하고\(추측 호출 금지\)|isolation: 'worktree'.*방식으로 폴백" skills/run/worktree.md` = 3)
 
 ## 플렉스 모드
 
@@ -65,9 +65,14 @@
 
 ## 리포별 설정
 
-- skills/run/SKILL.md 단계 1 컨텍스트 팩에 (e) 리포별 config 조건부 로드 3요소가 모두 있는가 — "있으면 Read", "전역 기본값 대체", "없으면 생략+대장 임의 생성 금지" 3종이 단계 1 구간 안에서 각 1회 이상 매칭 (검증: `awk '/^## 단계 1/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' ' | grep -oE 'config\.md`가 있으면 Read|전역 기본값을 \*\*대체\*\*한다|없으면 생략, 대장이 임의 생성하지 않는다' | sort -u | wc -l` → 3)
+- 리포별 config 조건부 로드 3요소가 형제 파일에 실재하는가(라우터화 반영) — "있으면 Read"·"전역 기본값 대체"·"없으면 생략+대장 임의 생성 금지"가 `skills/run/context-sources.md`에 전부 존재하고, SKILL.md 단계 1엔 "`.rabbits/config.md`가 있으면" 조건절 + `context-sources.md` Read 지시가 잔류 (검증: `grep -oE "config\.md.{0,10}있으면 Read|전역 기본값을 \*\*대체\*\*한다|없으면 생략, 대장이 임의 생성하지 않는다" skills/run/context-sources.md | sort -u | wc -l` = 3 + SKILL.md에 context-sources.md 참조 ≥1)
 - 코드 표준의 config 대체 우선순위가 두 파일에 모두 명시돼 있는가 — SKILL.md "## 코드 산출물 표준" 절과 archetypes.md "## 공통 규칙" 절 각 구간에서 config.md 우선/대체 문구가 1회 이상 매칭돼 적중 파일 수 2 (검증: 각 파일을 `awk -v h='^## <헤더>' '$0~h{fl=1;next} fl&&/^## /{exit} fl' <파일> | tr '\n' ' ' | grep -oE 'config\.md.{0,40}(대체한다|우선\*\*한다)' | wc -l` ≥1 인 파일 수 세기 → 2)
 
 ## 진단 피드백 루프 사다리
 
 - 디버거 아키타입 템플릿에 진단 피드백 루프 사다리가 규정되어 있는가 — `skills/run/archetypes.md`의 `## 7. 디버거` 구간 안에 사다리 6단계 마커(①~⑥) 6개가 모두 있고, "위에서부터 가능한 첫 수단"·"가설 단계로 진행 금지"·"outcome: BLOCKED"·"need:"·"임시 계측·디버그 코드 전량 제거"·"self_check" 6종 키워드가 전부 존재한다 (검증: `S=$(awk '/^## 7\. 디버거/{f=1;print;next} f&&/^## /{exit} f' skills/run/archetypes.md | tr '\n' ' '); L=$(printf '%s' "$S" | grep -oE '①|②|③|④|⑤|⑥' | wc -l); K=$(printf '%s' "$S" | grep -oE '위에서부터 가능한 첫 수단|가설 단계로 진행 금지|outcome: BLOCKED|need:|임시 계측·디버그 코드 전량 제거|self_check' | sort -u | wc -l); [ "$L" -eq 6 ] && [ "$K" -eq 6 ] && echo PASS || echo FAIL` → `PASS`)
+
+## SKILL 라우터화
+
+- SKILL.md 라우터화 후 분리된 3기능(워크트리 격리·백로그 규약·지식베이스/리포별 설정)의 발동 조건 1줄과 형제 파일 Read 지시가 각각 잔류하는가 — 기능 키워드 3종(`워크트리 격리`/`백로그`/`지식베이스|\.rabbits/config\.md`)이 각 1회 이상 매치되고, 형제 파일명 3종(worktree.md/backlog.md/context-sources.md)이 각 1회 이상 매치되며 그 행에 `Read`가 동행한다 (검증: `cd skills/run`에서 각 f∈{worktree,backlog,context-sources}에 대해 ``grep -E "(^|[^/])\`${f}\.md\`" SKILL.md | grep -c Read`` ≥1, 기능 키워드는 `grep -cE` ≥1 — 경로접두 배제 패턴으로 `.rabbits/backlog.md` 오탐 차단)
+- 신설 3파일이 실재하고 비어있지 않으며 SKILL.md가 참조하는 경로와 정확히 일치하는가 — skills/run/{worktree,backlog,context-sources}.md가 각각 존재·크기>0이고, SKILL.md의 형제 참조 3건이 실파일과 1:1 대응 (검증: 각 f에 대해 ``test -s skills/run/$f.md && grep -cE "(^|[^/])\`$f\.md\`" skills/run/SKILL.md``가 참조≥1·실재 yes로 3쌍 모두 성립)
