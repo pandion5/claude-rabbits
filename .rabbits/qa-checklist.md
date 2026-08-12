@@ -65,7 +65,8 @@
 
 ## 리포별 설정
 
-- 리포별 config 조건부 로드 3요소가 형제 파일에 실재하는가(라우터화 반영) — "있으면 Read"·"전역 기본값 대체"·"없으면 생략+대장 임의 생성 금지"가 `skills/run/context-sources.md`에 전부 존재하고, SKILL.md 단계 1엔 "`.rabbits/config.md`가 있으면" 조건절 + `context-sources.md` Read 지시가 잔류 (검증: `grep -oE "config\.md.{0,10}있으면 Read|전역 기본값을 \*\*대체\*\*한다|없으면 생략, 대장이 임의 생성하지 않는다" skills/run/context-sources.md | sort -u | wc -l` = 3 + SKILL.md에 context-sources.md 참조 ≥1)
+- 리포별 config 조건부 로드 3요소가 형제 파일에 실재하는가(라우터화 반영) — "있으면 Read"·"전역 기본값 대체"·"없으면 생략+대장 임의 생성 금지"가 `skills/run/context-sources.md`에 전부 존재하고, SKILL.md 단계 1엔 "`.rabbits/config.md`가 있으면" 조건절 + `context-sources.md` Read 지시가 잔류 (검증: **개행 정규화 필수** — `tr '
+' ' ' < skills/run/context-sources.md | grep -oE "config\.md.{0,10}있으면 Read|전역 기본값을 \*\*대체\*\*한다|없으면 생략, 대장이 임의 생성하지 *않는다" | sort -u | wc -l` = 3. 라인 단위 grep은 "임의 생성하지 / 않는다"가 줄바꿈에 걸려 2/3만 잡힘 + SKILL.md에 context-sources.md 참조 ≥1)
 - 코드 표준의 config 대체 우선순위가 두 파일에 모두 명시돼 있는가 — SKILL.md "## 코드 산출물 표준" 절과 archetypes.md "## 공통 규칙" 절 각 구간에서 config.md 우선/대체 문구가 1회 이상 매칭돼 적중 파일 수 2 (검증: 각 파일을 `awk -v h='^## <헤더>' '$0~h{fl=1;next} fl&&/^## /{exit} fl' <파일> | tr '\n' ' ' | grep -oE 'config\.md.{0,40}(대체한다|우선\*\*한다)' | wc -l` ≥1 인 파일 수 세기 → 2)
 
 ## 진단 피드백 루프 사다리
@@ -76,3 +77,7 @@
 
 - SKILL.md 라우터화 후 분리된 3기능(워크트리 격리·백로그 규약·지식베이스/리포별 설정)의 발동 조건 1줄과 형제 파일 Read 지시가 각각 잔류하는가 — 기능 키워드 3종(`워크트리 격리`/`백로그`/`지식베이스|\.rabbits/config\.md`)이 각 1회 이상 매치되고, 형제 파일명 3종(worktree.md/backlog.md/context-sources.md)이 각 1회 이상 매치되며 그 행에 `Read`가 동행한다 (검증: `cd skills/run`에서 각 f∈{worktree,backlog,context-sources}에 대해 ``grep -E "(^|[^/])\`${f}\.md\`" SKILL.md | grep -c Read`` ≥1, 기능 키워드는 `grep -cE` ≥1 — 경로접두 배제 패턴으로 `.rabbits/backlog.md` 오탐 차단)
 - 신설 3파일이 실재하고 비어있지 않으며 SKILL.md가 참조하는 경로와 정확히 일치하는가 — skills/run/{worktree,backlog,context-sources}.md가 각각 존재·크기>0이고, SKILL.md의 형제 참조 3건이 실파일과 1:1 대응 (검증: 각 f에 대해 ``test -s skills/run/$f.md && grep -cE "(^|[^/])\`$f\.md\`" skills/run/SKILL.md``가 참조≥1·실재 yes로 3쌍 모두 성립)
+
+## 런 속도 규칙
+
+- 런 속도 규칙 3종이 단계 3(파견) 구간에 명시되는가 — 분할 기준 수치(20항목/3분)·전용 스크래치 또는 담당 범위·테스터 동시 파견·과분할 경고(고정비) 4요소가 각각 1건 이상 매칭, 다른 단계 구간에서는 0건 (`S=$(awk -v h="^## 단계 3 — 파견" '$0 ~ h {p=1;next} /^## /{p=0} p' skills/run/SKILL.md | tr '\n' ' '); for P in '20\s*항목|3\s*분' '스크래치|담당\s*범위' '테스터' '과분할|고정비'; do printf '%s ' "$(printf '%s' "$S" | grep -oE "$P" | wc -l)"; done` → 4개 카운트 모두 ≥1이면 PASS)
