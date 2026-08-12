@@ -86,3 +86,7 @@
 
 - scripts/release.sh가 실재하고 사전 검증 5종·드라이런·안전 규칙이 구현돼 있는가 — 파일 존재 + ①브랜치 main 확인 ②마커(run-active/run-waiting) 스테이징 차단 ③README 중복 행 검출 ④plugin.json 버전 검사 ⑤고정 문구 102 카운트 5종이 본문에 나타나고 `--dry-run` 분기 존재, 파괴적 명령(`rm -rf`·`reset --hard`·`push --force`·`push -f`·`clean -fd`)은 0건 (검증: `test -f scripts/release.sh` 후 `grep -cE "main|run-active|seen\[|version|102"` 각 ≥1 — 중복 검출은 awk seen[] 구현(uniq -d 아님) + `grep -nE 'rm -rf|reset --hard|push --force|push -f|clean -fd' scripts/release.sh` 무출력)
 - 릴리스 스크립트가 드라이런에서 실제 검증을 수행하고 리포를 변경하지 않는가 — `sh scripts/release.sh --dry-run <현재버전> "test" README.md` 실행 시(**파일 인자 필수** — 없고 스테이징도 비면 "대상 파일이 없다"로 EXIT=1) 5검증 결과를 출력하고 EXIT=0, plugin.json version은 실행 전후 동일 (검증: 실행 전후 `grep version .claude-plugin/plugin.json` 비교 + `git status --porcelain` 신규 변경 0건)
+
+## 행위 검증
+
+- 정적 문자열 검사가 아니라 실제 동작이 계약대로인가 — `sh scripts/behavior-check.sh` 1회 실행으로 3사이클이 전부 `[PASS]`이고 EXIT=0 (①마커 사이클: 임시 프로젝트에 `.rabbits/run-active.md`를 두면 stop-guard가 `decision=block`·비어있지 않은 `reason`·exit 0, `run-waiting.md`로 개명하면 무출력·exit 0(대기 규약), 삭제하면 무출력·exit 0 ②백로그 소비: 미완료 3건 중 최상단 1건만 `- [x]`로 바뀌어 잔여 2건, 미해결 케이스는 `- [x] 항목 (미해결: 사유)` 형식, 대상 외 행은 원문 대조로 바이트 불변 ③릴리스 가드: `release.sh --dry-run <현재버전> "..." README.md`가 EXIT=0, 대상에 `.rabbits/run-active.md`를 섞으면 "런 마커가 대상 목록에 있다"로 EXIT≠0). 임시물은 `mktemp -d` 하위에만 만들고 trap으로 정리하므로 실행 후 `git status --porcelain` 신규 변경 0건
