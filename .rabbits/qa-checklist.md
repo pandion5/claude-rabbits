@@ -55,7 +55,8 @@
 
 ## 2축 분리 리뷰
 
-- SKILL.md 단계 4 구간에 2축 리뷰 규칙 4요소가 모두 존재한다 — 리뷰어 2명 병렬 파견·Standards/Spec 두 축 정의·병합·재순위 금지·저위험 미발동이 각 1건 이상 매칭돼 총 4건 (검증: `awk '/^## 단계 4/{f=1;next} /^## /{f=0} f' skills/run/SKILL.md | tr '\n' ' ' | grep -oE '리뷰어 2명을 병렬 파견|Standards 축.*Spec 축|병합·재순위 금지|저위험.{0,40}미발동' | wc -l` 결과가 4)
+- SKILL.md 단계 4 구간에 2축 리뷰 발동 조건·축 이름·Read 지시가 잔류하는가(라우터화 반영) — "독립 리뷰어 2명 병렬 파견"·"Standards 축"·"Spec 축"·`review-rubric.md` Read 지시·"저위험 산출물은 미발동" 5요소가 각 1건 이상, 상세(축별 루브릭 매핑·병합 금지·판정 결합)는 review-rubric.md에서 확인 (검증: `awk '/^## 단계 4/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '
+' ' ' | grep -oE "독립 리뷰어 2명 병렬 파견|Standards 축|Spec 축|review-rubric\.md|저위험 산출물은 미발동" | sort -u | wc -l` = 5)
 - review-rubric.md에 "## 2축 분리 리뷰" 절이 존재하고 그 구간 안에 축↔루브릭 매핑과 판정 결합 규칙이 명시돼 있다 — Standards=5·4, Spec=1·2·3, "한 축이라도 미달이면 그 축 사유로 REVISE"가 각 1건씩 총 3건 (검증: `awk '/^## 2축 분리 리뷰/{f=1;next} /^## /{f=0} f' skills/run/review-rubric.md | tr '\n' ' ' | grep -oE 'Standards 축\*\* = 루브릭 \*\*5·4|Spec 축\*\* = 루브릭 \*\*1·2·3|판정 결합.{0,60}REVISE' | wc -l` 결과가 3)
 
 ## 사전 스코프 계약
