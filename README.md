@@ -4,6 +4,8 @@
 
 자율 서브에이전트 오케스트레이션 Claude Code 플러그인.
 
+> Codex용 `Sol · Luna · Terra` 버전은 [`codex/rabbits/`](codex/rabbits/)에 있다.
+
 메인 세션이 **대장(오케스트레이터)**이 되어 작업을 기획하고, 즉석 일회용 전문가
 **워커토끼(서브에이전트)**를 편성·파견·감독·검토·피드백해 완료까지 **완전 자율**로 몰고 간다.
 
@@ -18,6 +20,10 @@ claude plugin install rabbits@rabbits
 
 - 로드 확인: `claude plugin list` 또는 `/plugin` UI의 Installed 탭에 `rabbits`.
 - 업데이트: `claude plugin update rabbits@rabbits`.
+
+### Codex 버전
+
+Codex판은 Sol이 계획·배정·최종 검토를 맡고, Luna는 조사·분석·리뷰, Terra는 구현·테스트·실행 검증을 맡는다. 자세한 사용법과 설치 대상은 [`codex/rabbits/README.md`](codex/rabbits/README.md)를 참고한다.
 
 ### 로컬 개발 설치
 
@@ -187,9 +193,8 @@ rabbits/
 - **Stop hook 종료 가드**: `.rabbits/run-active.md` 마커가 있으면 종료를 차단해 단계 6 완료까지
   강제 지속한다(하니스 8회 block 캡이 무한 루프를 막음). 마커는 `.gitignore` 등재(커밋 금지) —
   크래시 잔존분이 커밋되면 리포 전체 세션을 차단하기 때문. Git Bash가 없는 Windows는 PowerShell
-  폴백이라 sh 스크립트가 동작하지 않을 수 있다 — 이 경우 가드는 미작동(한계).
-  background 워커의 완료알림을 기다리며 턴을 끝낼 때는 마커를 `run-waiting.md`로 개명해
-  가드를 잠시 쉬게 한다.
+  폴백이라 sh 스크립트가 동작하지 않을 수 있다 — 이 경우 가드는 미작동(한계). background 워커의
+  완료알림을 기다리며 턴을 끝낼 때는 마커를 `run-waiting.md`로 개명해 가드를 잠시 쉬게 한다.
 - **지식베이스 연동(선택)**: 세션 컨텍스트에 기술 노하우 색인이 주입돼 있으면 단계 1 팩에 관련
   노하우를 포함하고, 기록 스킬도 있으면 단계 6에서 검증된 신규 노하우를 기록한다 — 둘 다 없으면 미동작.
 - **워크트리 격리(선택)**: 하니스 Agent 툴이 지원하면 병렬 파일 변경 워커(또는 위험한 단독
@@ -201,8 +206,20 @@ rabbits/
   컨텍스트 팩에 실려 워커에게 전달된다. 코드 표준(들여쓰기·주석 언어·명명), 이슈트래커·PR 관례,
   도메인 용어집 경로, 금지 사항을 자유 markdown으로 적으면 그 값이 전역 기본값(2칸·한국어 주석)을
   대체한다 — 파일이 없거나 항목이 비면 기존 기본값 그대로다.
+
+  ```markdown
+  # 코드 표준
+  4칸 들여쓰기, 영어 주석, 함수명 snake_case.
+  # 이슈트래커 / PR
+  Jira(PROJ-123), PR 제목에 티켓 키 필수.
+  # 용어집: docs/glossary.md
+  # 금지: src/legacy/ 수정, 신규 의존성 추가
+  ```
+
 - **백로그 자동 연쇄 비용**: 무인자 호출은 백로그 길이만큼 런이 이어져 그만큼 토큰을 쓴다 —
   항목을 작게 쪼개고, 중단하려면 백로그 항목을 지우거나 런 마커를 삭제한다.
+- **릴리스**: `sh scripts/release.sh [--dry-run] <버전> "<커밋 제목>" [파일...]` — 브랜치·런 마커·README
+  중복 행·고정 문구 102건을 검증한 뒤 plugin.json 상향·커밋·push·`claude plugin update`를 한 번에 처리한다.
 
 ## 서드파티 고지
 

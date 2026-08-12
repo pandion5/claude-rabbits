@@ -28,7 +28,7 @@
 
 ## 워크트리 격리
 
-- 워크트리 격리 규약이 실재하고 SKILL 단계 3에 발동 조건·Read 지시가 잔류하는가(라우터화 반영) — SKILL.md 단계 3 구간에 "2명 이상을 병렬" 발동 기준 + `worktree.md` Read 지시 2건, 상세 5키워드(`isolation: 'worktree'`·반드시 커밋·격리 금지·무격리로 재파견·환경 스킬/CLI 우선)는 `skills/run/worktree.md`에서 확인 (검증: SKILL 단계 3 구간에서 `grep -cE "2명 이상을 병렬|worktree\.md"` ≥2 + `grep -cE "isolation: 'worktree'|반드시 커밋|격리 금지|무격리로 재파견" skills/run/worktree.md` ≥4)
+- 워크트리 격리 규약이 실재하고 SKILL 단계 3에 발동 조건·Read 지시가 잔류하는가(라우터화 반영) — SKILL.md 단계 3 구간에 "2명 이상을 병렬" 발동 기준 + `worktree.md` Read 지시(두 문구 합산 2건 이상), 상세 5키워드(`isolation: 'worktree'`·반드시 커밋·격리 금지·무격리로 재파견·환경 스킬/CLI 우선)는 `skills/run/worktree.md`에서 확인 (검증: SKILL 단계 3 구간에서 `grep -cE "2명 이상을 병렬|worktree\.md"` ≥2 + `grep -cE "isolation: 'worktree'|반드시 커밋|격리 금지|무격리로 재파견" skills/run/worktree.md` ≥4)
 - 워크트리 회수·정리가 단계 4 도입부(검토 전)에 위치하고 절차 상세가 형제 파일에 실재하는가(라우터화 반영) — SKILL.md에 "격리 워커 회수·정리(검토 전)" 불릿이 단계 4 구간(단계 5 헤더 이전)에 있고 단계 6엔 회수 불릿 부재, 절차 3요소(worktreePath·`status --porcelain`·`git worktree remove --force`)는 `skills/run/worktree.md`에서 확인 (검증: `grep -n "회수·정리(검토 전)" skills/run/SKILL.md` 라인이 단계 4 구간 내 + `grep -cE "worktreePath|status --porcelain|git worktree remove --force" skills/run/worktree.md` = 3)
 
 ## Stop hook 대기 규약
@@ -81,3 +81,8 @@
 ## 런 속도 규칙
 
 - 런 속도 규칙 3종이 단계 3(파견) 구간에 명시되는가 — 분할 기준 수치(20항목/3분)·전용 스크래치 또는 담당 범위·테스터 동시 파견·과분할 경고(고정비) 4요소가 각각 1건 이상 매칭, 다른 단계 구간에서는 0건 (`S=$(awk -v h="^## 단계 3 — 파견" '$0 ~ h {p=1;next} /^## /{p=0} p' skills/run/SKILL.md | tr '\n' ' '); for P in '20\s*항목|3\s*분' '스크래치|담당\s*범위' '테스터' '과분할|고정비'; do printf '%s ' "$(printf '%s' "$S" | grep -oE "$P" | wc -l)"; done` → 4개 카운트 모두 ≥1이면 PASS)
+
+## 릴리스 파이프라인
+
+- scripts/release.sh가 실재하고 사전 검증 5종·드라이런·안전 규칙이 구현돼 있는가 — 파일 존재 + ①브랜치 main 확인 ②마커(run-active/run-waiting) 스테이징 차단 ③README 중복 행 검출 ④plugin.json 버전 검사 ⑤고정 문구 102 카운트 5종이 본문에 나타나고 `--dry-run` 분기 존재, 파괴적 명령(`rm -rf`·`reset --hard`·`push --force`·`push -f`·`clean -fd`)은 0건 (검증: `test -f scripts/release.sh` 후 `grep -cE "main|run-active|seen\[|version|102"` 각 ≥1 — 중복 검출은 awk seen[] 구현(uniq -d 아님) + `grep -nE 'rm -rf|reset --hard|push --force|push -f|clean -fd' scripts/release.sh` 무출력)
+- 릴리스 스크립트가 드라이런에서 실제 검증을 수행하고 리포를 변경하지 않는가 — `sh scripts/release.sh --dry-run <현재버전> "test" README.md` 실행 시(**파일 인자 필수** — 없고 스테이징도 비면 "대상 파일이 없다"로 EXIT=1) 5검증 결과를 출력하고 EXIT=0, plugin.json version은 실행 전후 동일 (검증: 실행 전후 `grep version .claude-plugin/plugin.json` 비교 + `git status --porcelain` 신규 변경 0건)
