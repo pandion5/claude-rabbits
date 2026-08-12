@@ -128,14 +128,14 @@ fi
 
 if [ "$DRY_RUN" = "1" ]; then
   echo "[드라이런] git add $*"
-  echo "[드라이런] git commit -m \"$SUBJECT\" -m \"Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>\""
+  echo "[드라이런] git commit -m \"$SUBJECT\" -m \"Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>\""
   echo "[드라이런] git push"
   echo "[드라이런] claude plugin update rabbits@rabbits"
   exit 0
 fi
 
 git add -- "$@"
-git commit -m "$SUBJECT" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git commit -m "$SUBJECT" -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 git push
 # 플러그인 갱신은 리포 작업 완료 후의 로컬 편의 단계 — 실패해도 커밋·push는 이미 유효하므로 경고만.
 claude plugin update rabbits@rabbits || echo "[경고] claude plugin update 실패 — 수동으로 실행하라." >&2
