@@ -13,7 +13,7 @@
 - SKILL.md가 Read 참조하는 경로(단계 2: archetypes.md·archetypes-ext/<분야>.md·teams.md / 단계 4: review-rubric.md)가 실제 skills/run/ 아래 존재하는가(실재 파일 목록과 대조) — 참조 전부 실재, 확장 12파일명도 인덱스 "파일" 컬럼과 1:1 대응
 - 팀 프리셋 6종 명칭이 README.md 전문 팀 표·teams.md `## X팀` 헤더·SKILL.md 단계 1 팀 발동표 3곳에서 동일 집합인가(세 위치 팀명 추출 후 3-way 대조) — {테크팀,법무팀,보안팀,서치팀,QA팀,QC팀} 순서 무관 동일, 철자 불일치 0건
 - 코어 아키타입 8종 한글명이 README.md 코어 표와 archetypes.md `## N. 이름 (영문)` 헤더 8개 사이 번호·명칭 모두 일치하는가(번호순 대조) — 8개명 두 위치에서 번호·철자 일치
-- 버전 문자열이 리포 활성 영역에서 `.claude-plugin/plugin.json` 단 한 곳에만 선언되는가(plugin.json의 version 값을 읽어 그 문자열을 json·md 전체에서 grep — 이력·인용 성격인 docs/·.superpowers/·이 체크리스트 자신·README 스모크 체크리스트의 이력 버전 표기(Tn 라벨), 별도 배포 단위인 codex/는 제외) — 선언 매치 정확히 1건(plugin.json), 타 파일 버전 재선언 없음
+- 버전 문자열이 리포 활성 영역에서 `.claude-plugin/plugin.json` 단 한 곳에만 선언되는가(plugin.json의 version 값을 읽어 그 문자열을 json·md 전체에서 grep — 이력·인용 성격인 docs/·.superpowers/·이 체크리스트 자신·README 스모크 체크리스트의 이력 버전 표기(Tn 라벨), 별도 배포 단위인 codex/·런 보고서 보관소인 reports/는 제외) — 선언 매치 정확히 1건(plugin.json), 타 파일 버전 재선언 없음
 
 ## Stop hook 종료 가드
 
@@ -103,3 +103,7 @@
 ## 보고서 집중 경로
 
 - 단계 6 보고서 저장 불릿에 config 집중 경로 분기 3요소가 있는가 — `config.md`에 보고서 경로 지정 시 `<지정경로>/<프로젝트명>/` 하위 폴더 사용·경로 없으면 생성(기존 `.rabbits/` 부재 생략과 구분)·미지정 시 기본 동작 유지가 각 1건 이상, context-sources.md에 형식 예시(`# 런 보고서 경로` + 절대경로)가 존재 (검증: `S=$(awk '/^## 단계 6 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '런 보고서 경로가 지정|<프로젝트명>|만든다|지정이 없으면' | sort -u | wc -l` ≥3 + `grep -c '런 보고서 경로' skills/run/context-sources.md` ≥1)
+
+## 회고 스킬
+
+- skills/retro/SKILL.md가 실재하고 4단계 절차·하드제약·경로 결정 규칙이 명시되는가 — frontmatter(description·argument-hint) + 단계 1~4(수집·읽기·패턴·백로그) + 하드제약 4종(읽기 전용·승낙 전 추가 금지·근거 2건 미만 승격 금지·3건 미만 표본 부족 중단) + 경로 우선순위(인자 > config `# 런 보고서 경로` > `.rabbits/reports/`)가 각 1건 이상, 60줄 이내 (검증: `test -f skills/retro/SKILL.md && wc -l < skills/retro/SKILL.md` ≤60 + `grep -cE "표본 부족|읽기 전용|승낙|근거 파일명|런 보고서 경로" skills/retro/SKILL.md` ≥5)
