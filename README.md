@@ -142,12 +142,14 @@ rabbits/
 ├── hooks/
 │   ├── hooks.json        # Stop 이벤트 → 종료 가드 등록
 │   └── stop-guard.sh     # 마커 기반 종료 차단 (POSIX sh)
-├── skills/run/
-│   ├── SKILL.md          # 6단계 프로토콜
-│   ├── archetypes.md     # 코어 8종 + 공통 규칙 + 확장 카탈로그 인덱스
-│   ├── archetypes-ext/   # 확장 아키타입 93종 (12분야, 지연 로드)
-│   ├── teams.md          # 전문 팀 프리셋 6종 (테크·법무·보안·서치·QA·QC)
-│   └── review-rubric.md  # 검토 루브릭 + 에스컬레이션 사다리
+├── skills/
+│   ├── retro/SKILL.md    # 회고 — 런 보고서에서 패턴·약점 추출
+│   └── run/
+│       ├── SKILL.md      # 6단계 프로토콜
+│       ├── archetypes.md # 코어 8종 + 공통 규칙 + 확장 카탈로그 인덱스
+│       ├── archetypes-ext/ # 확장 아키타입 93종 (12분야, 지연 로드)
+│       ├── teams.md      # 전문 팀 프리셋 6종 (테크·법무·보안·서치·QA·QC)
+│       └── review-rubric.md # 검토 루브릭 + 에스컬레이션 사다리
 └── README.md
 ```
 
