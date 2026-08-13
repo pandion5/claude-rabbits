@@ -99,3 +99,7 @@
 ## 런 보고서 영속화
 
 - 단계 6 구간에 런 보고서 저장 규칙 4요소(`.rabbits/reports/` 경로·`<YYYY-MM-DD>-<슬러그>.md` 파일명·워커 메타 포함 내용 구성·저장 시점/`.rabbits/` 부재 시 생략)가 모두 있고, 서술 순서가 "최종 리포트 < 보고서 저장 < 백로그 처리"인가 — 5개 카운트 전부 ≥1, 다른 단계 구간의 `.rabbits/reports/`는 0건 (검증: `S=$(awk '/^## 단계 6 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' ')` 절단·평탄화 후 패턴별 `printf '%s' "$S" | grep -oE <패턴> | wc -l` — E1 `\.rabbits/reports/`, E2 `<YYYY-MM-DD>-<[^>]+>\.md`, E3 `워커 메타[^+]*아키타입[^+]*모델[^+]*라운드[^+]*판정[^+]*REVISE`, E4 `(먼저|직후|생략)`, ORDER `최종 리포트.*보고서 저장.*\.rabbits/reports/.*백로그 처리`; 대조군은 단계 4·단계 1 구간에 E1 적용해 0)
+
+## 보고서 집중 경로
+
+- 단계 6 보고서 저장 불릿에 config 집중 경로 분기 3요소가 있는가 — `config.md`에 보고서 경로 지정 시 `<지정경로>/<프로젝트명>/` 하위 폴더 사용·경로 없으면 생성(기존 `.rabbits/` 부재 생략과 구분)·미지정 시 기본 동작 유지가 각 1건 이상, context-sources.md에 형식 예시(`# 런 보고서 경로` + 절대경로)가 존재 (검증: `S=$(awk '/^## 단계 6 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '런 보고서 경로가 지정|<프로젝트명>|만든다|지정이 없으면' | sort -u | wc -l` ≥3 + `grep -c '런 보고서 경로' skills/run/context-sources.md` ≥1)
