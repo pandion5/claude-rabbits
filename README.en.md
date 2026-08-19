@@ -72,7 +72,7 @@ git (intentionally — for team sharing and history).
 |-------|------|---------------|
 | 0 | Intake | Pin down the goal and the definition of success |
 | 1 | Planning | Decompose into subtasks → mini DAG + completion criteria; auto-decide specialist teams; build the roster; assemble the context pack once |
-| 2 | Cast | 101 archetypes (8 core + 93 extended, lazy-loaded by domain) + 5 specialist team presets (tech, legal, security, search, QA) + model and time-limit assignment |
+| 2 | Cast | 101 archetypes (8 core + 93 extended, lazy-loaded by domain) + 6 specialist team presets (tech, legal, security, search, QA, QC) + model and time-limit assignment |
 | 3 | Dispatch | Independent tasks run in parallel, dependent tasks run sequentially, long-running tasks run in background |
 | 3.5 | Supervision | maxTurns as a first-line guard + time-limit watchdog + swap in a replacement worker if stalled |
 | 4 | Review | Worker `rabbits-result` block (self_check) + rubric → PASS / REVISE / ESCALATE |
@@ -137,19 +137,29 @@ rabbits/
 ├── .claude-plugin/
 │   ├── marketplace.json
 │   └── plugin.json
+├── agents/
+│   └── rabbits-readonly.md  # Shared profile for read-only workers (narrowed tools → smaller prefill)
 ├── hooks/
 │   ├── hooks.json        # Registers the Stop event → stop guard
 │   └── stop-guard.sh     # Marker-based exit blocking (POSIX sh)
-├── skills/run/
-│   ├── SKILL.md          # 6-stage protocol
-│   ├── archetypes.md     # 8 core archetypes + shared rules + extended catalog index
-│   ├── archetypes-ext/   # 93 extended archetypes (12 domains, lazy-loaded)
-│   ├── teams.md          # 5 specialist team presets (tech, legal, security, search, QA)
-│   └── review-rubric.md  # Review rubric + escalation ladder
+├── skills/
+│   ├── retro/SKILL.md    # Retrospective — extracts patterns and weaknesses from run reports
+│   └── run/
+│       ├── SKILL.md          # 6-stage protocol
+│       ├── archetypes.md     # 8 core archetypes + shared rules + extended catalog index
+│       ├── archetypes-ext/   # 93 extended archetypes (12 domains, lazy-loaded)
+│       ├── teams.md          # 6 specialist team presets (tech, legal, security, search, QA, QC)
+│       └── review-rubric.md  # Review rubric + escalation ladder
 └── README.md
 ```
 
-No `agents/` folder — workers are improvised and disposable (not saved to files).
+Workers are improvised and disposable by default (not saved to files). The one predefined agent is
+`rabbits-readonly` — a shared profile that narrows the tool list for workers that never edit files,
+cutting startup prefill from ~34,100 to ~9,000 tokens. Dispatch it with the plugin prefix
+(`rabbits:rabbits-readonly`); omitting the prefix fails. Read-only is **not enforced at the tool
+level** — `Write`/`Edit` are gone but `Bash` remains, so it rests on the profile's own rules.
+Most of the saving comes from excluding the `Skill` tool: with it the skill listing is injected,
+without it nothing is attached.
 
 ## Smoke-test checklist
 
