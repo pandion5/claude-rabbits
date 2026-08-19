@@ -106,4 +106,12 @@
 
 ## 회고 스킬
 
-- skills/retro/SKILL.md가 실재하고 4단계 절차·하드제약·경로 결정 규칙이 명시되는가 — frontmatter(description·argument-hint) + 단계 1~4(수집·읽기·패턴·백로그) + 하드제약 4종(읽기 전용·승낙 전 추가 금지·근거 2건 미만 승격 금지·3건 미만 표본 부족 중단) + 경로 우선순위(인자 > config `# 런 보고서 경로` > `.rabbits/reports/`)가 각 1건 이상, 60줄 이내 (검증: `test -f skills/retro/SKILL.md && wc -l < skills/retro/SKILL.md` ≤60 + `grep -cE "표본 부족|읽기 전용|승낙|근거 파일명|런 보고서 경로" skills/retro/SKILL.md` ≥5)
+- skills/retro/SKILL.md가 실재하고 4단계 절차·하드제약·경로 결정 규칙이 명시되는가 — frontmatter(description·argument-hint) + 단계 1~4(수집·읽기·패턴·백로그) + 하드제약 4종(읽기 전용·승낙 전 추가 금지·근거 2건 미만 승격 금지·3건 미만 표본 부족 중단) + 경로 우선순위(인자 > config `# 런 보고서 경로` > `.rabbits/reports/`)가 각 1건 이상, 60줄 이내 (검증: `test -f skills/retro/SKILL.md && wc -l < skills/retro/SKILL.md` ≤60 + `grep -cE "표본 부족|읽기 전용|승낙|보고서 파일명|런 보고서 경로" skills/retro/SKILL.md` ≥5)
+
+## 팩 좌표 선주입·출처 태그
+
+- 단계 1 구간에 좌표 선주입 4요소·출처 태그 3종·발동 기준·`[추정]` 검증 의무가 모두 있고, 단계 2 슬롯 설명이 태그 전달을 명시하는가 — 6패턴 전부 ≥1건 (검증: `S=$(awk '/^## 단계 1 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '파일:줄|호출부|테스트 위치|\[실측\|추정\|전언\]|워커 2명 이상|첫 과업' | sort -u | wc -l` = 6 + `grep -c '좌표·출처 태그 그대로' skills/run/SKILL.md` = 1. 대조군: 같은 awk를 단계 3에 적용하면 `\[실측` 0건)
+
+## 개별 검토 배리어 제거
+
+- 단계 4에 완료알림 도착 즉시 개별 검토 규칙이 있고 단계 6 통합과 역할 분담이 모순 없이 읽히는가 — 단계 4 구간에 즉시성·단일 워커·배리어 부정·단계 6 위임 4패턴이 각 1건 이상이고, 단계 6 통합 불릿에 전원 대기 한정 문구가 1건 (검증: `S=$(awk '/^## 단계 4 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '완료알림이 도착하는 즉시|그 워커만|배리어를 두지 않는다|단계 6 통합에서만' | sort -u | wc -l` = 4 + `grep -c '전원 대기는 여기서만' skills/run/SKILL.md` = 1)
