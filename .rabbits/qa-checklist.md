@@ -17,6 +17,8 @@
 
 - 단계 0 시작 선언이 플러그인 버전을 포함하도록 지시하는가 — 시작 선언 줄에 `v<버전>` 자리와 plugin.json 참조가 함께 있어야 한다 (검증: `grep -c 'rabbits v<버전> 오케스트레이션 시작' skills/run/SKILL.md` = 1 + `grep -c 'claude-plugin/plugin.json' skills/run/SKILL.md` >= 1)
 
+- 공통 결과 블록에 `commands_run`과 확장 outcome enum이 있고 실패 명령 생략 금지가 명시되는가 — `commands_run:`·`status: pass`·`key_output:` 각 1건, outcome 주석에 PARTIAL·ASSUMPTION_INVALIDATED 포함, "프로토콜 위반" 1건, "최종 판정을 쓰지 말 것" 단서 유지 1건 (검증: `grep -cE 'commands_run:|status: pass|key_output:' skills/run/archetypes.md` = 3 + `grep -cF 'DONE | PARTIAL | BLOCKED | ASSUMPTION_INVALIDATED' skills/run/archetypes.md` = 1 + `grep -c '프로토콜 위반' skills/run/archetypes.md` = 1 + `grep -c '최종 판정을 쓰지 말 것' skills/run/archetypes.md` = 1)
+
 ## Stop hook 종료 가드
 
 - Stop hook 마커 부재/존재 2케이스 계약 — 마커 없으면 stdout 빈 값·exit 0, 마커 있으면 decision=="block"이고 reason 비어있지 않은 유효 JSON·exit 0 (검증: CLAUDE_PROJECT_DIR을 임시 디렉토리로 지정해 `sh hooks/stop-guard.sh` 실행 후 stdout을 `python -c "import json,sys; json.load(sys.stdin)"`로 파싱하고 exit code 확인)
@@ -114,7 +116,9 @@
 ## 팩 좌표 선주입·출처 태그
 
 - 단계 1 구간에 좌표 선주입 4요소·출처 태그 3종·발동 기준·`[추정]` 검증 의무가 모두 있고, 단계 2 슬롯 설명이 태그 전달을 명시하는가 — 6패턴 전부 ≥1건 (검증: `S=$(awk '/^## 단계 1 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '파일:줄|호출부|테스트 위치|\[실측\|추정\|전언\]|워커 2명 이상|첫 과업' | sort -u | wc -l` = 6 + `grep -c '좌표·출처 태그 그대로' skills/run/SKILL.md` = 1. 대조군: 같은 awk를 단계 3에 적용하면 `\[실측` 0건)
+- 단계 1 좌표 불릿이 좌표를 시작점으로 격하하고 3종 세트·낡은 좌표 판정을 규정하는가 — 단계 1 구간에 3종 세트·2개 이상 불일치·재탐색·범위 격하 4패턴이 각 1건 이상 (검증: `S=$(awk '/^## 단계 1 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '3종 세트|둘 이상 안 맞으면|재탐색|시작점이지 작업 범위가 아니다' | sort -u | wc -l` = 4. 대조군: 같은 awk를 단계 3에 적용하면 0건)
 
 ## 개별 검토 배리어 제거
 
 - 단계 4에 완료알림 도착 즉시 개별 검토 규칙이 있고 단계 6 통합과 역할 분담이 모순 없이 읽히는가 — 단계 4 구간에 즉시성·단일 워커·배리어 부정·단계 6 위임 4패턴이 각 1건 이상이고, 단계 6 통합 불릿에 전원 대기 한정 문구가 1건 (검증: `S=$(awk '/^## 단계 4 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '완료알림이 도착하는 즉시|그 워커만|배리어를 두지 않는다|단계 6 통합에서만' | sort -u | wc -l` = 4 + `grep -c '전원 대기는 여기서만' skills/run/SKILL.md` = 1)
+- 단계 4에 전제 반증 전파 규칙이 있고 판정의 잠정성·단계 6 최종 확정이 명시되는가 — 단계 4 구간에 반증 신호·재검토 복귀·잠정·단계 6 확정 4패턴이 각 1건 이상 (검증: `S=$(awk '/^## 단계 4 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'ASSUMPTION_INVALIDATED|재검토 대상으로|잠정|최종 확정은 단계 6' | sort -u | wc -l` = 4)

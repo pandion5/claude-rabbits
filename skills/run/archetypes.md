@@ -18,18 +18,24 @@
 - **결과 블록 포맷** (모든 워커 공통):
 
     ```rabbits-result
-    outcome: DONE            # DONE | BLOCKED
+    outcome: DONE            # DONE | PARTIAL | BLOCKED | ASSUMPTION_INVALIDATED
     deliverable: <결과물 또는 위치>
     evidence:
       - <판정에 필요한 최소 근거 file:line / 수치>
+    commands_run:            # 실행한 검증 명령, 핵심 5건 이내
+      - command: <명령>
+        status: pass | fail
+        key_output: <한 줄 요약>
     self_check:
       - <완료조건1>: ✓
       - <완료조건2>: ✗ <이유>
     notes: <있으면 1줄>
     ```
 
-  - `outcome`에 PASS/FAIL 같은 **최종 판정을 쓰지 말 것** — 판정은 대장 몫이다.
+  - `outcome`에 PASS/FAIL 같은 **최종 판정을 쓰지 말 것** — 판정은 대장 몫이다(PARTIAL=일부만 완료,
+    ASSUMPTION_INVALIDATED=팩의 `[추정]`·좌표를 반증했을 때).
     워커는 `self_check`에 완료조건별 자가대조(✓/✗)만 적는다.
+  - `commands_run`: **실패한 명령을 생략하면 프로토콜 위반** — 실패도 그대로, 5건 초과면 실패 우선.
   - `evidence`는 판정에 필요한 **최소 근거만**. 전체 목록·원문 덤프 금지 —
     대장이 더 필요하면 SendMessage로 요청한다.
 - 코드 산출물 표준: 2칸 들여쓰기, 한국어 주석, 리포 관례 준수.
