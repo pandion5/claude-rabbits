@@ -128,3 +128,6 @@
 - README.en.md가 한글판과 어긋나지 않는가 — 영문판 QA 커버리지가 0이라 드리프트가 방치된 전례가 있다 (검증: `grep -c '5 specialist team presets' README.en.md` = 0 + `grep -c 'No .agents/. folder' README.en.md` = 0 + `grep -c 'agents/' README.en.md` >= 1 + 팀 수·아키타입 수 표기가 README.md와 일치하는지 육안 대조)
 
 - `agents/rabbits-readonly.md`가 실재하고 frontmatter 3필드(`name`·`description`·`tools: Read, Grep, Glob, Bash`)를 갖췄으며, 단계 2 구간에 이 프로필 파견 규칙과 단서 3종(변경 워커 불가·스킬 호출 시 불가·구버전 세션 폴백)이 모두 있는가 — frontmatter 3패턴 전부 ≥1건, 단계 2 구간 4패턴 전부 ≥1건 (검증: `test -f agents/rabbits-readonly.md && grep -coE '^name: rabbits-readonly$|^description: .+|^tools: Read, Grep, Glob, Bash$' agents/rabbits-readonly.md` = 3 + `S=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'rabbits-readonly|Write/Edit 없음|스킬 호출|구버전 세션' | sort -u | wc -l` = 4. 대조군: 같은 awk를 단계 3에 적용하면 0건)
+
+## 런 자기 감사 스크립트
+- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 off 커밋·감사 결과 절·미해결 절·README 드리프트·미푸시)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `test -f scripts/self-audit.sh && grep -oE '(report|skip) "[1-6]\.' scripts/self-audit.sh | grep -oE '[1-6]' | sort -u | wc -l` = 6 + `grep -c 'self-audit.sh --in-run' skills/run/SKILL.md` >= 1)
