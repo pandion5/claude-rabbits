@@ -23,3 +23,6 @@
 - [ ] 공유자원 변경 로그 게이트 — 합성 하네스 결과만으로 안전 판정 금지, 가동 시스템 로그·메트릭 확인 후 판정 (근거: onnx-session-share-abort·edge-decode-perf)
 - [ ] 이월 항목 백로그 자동 등재 — 미해결·이월은 종료 전 backlog.md 기입 확인 (근거: telemetry-p1 감사 적발·telemetry-p2 이월분 P2.5 승격)
 - [ ] 결과 블록 누락 시 즉시 재제출 — REVISE 라운드 소모 대신 형식 재제출 요구 (근거: onnx 1R REVISE 사유 절반이 형식 누락)
+- [ ] 감사 발동 기계화 — 조건(워커 3명+ 또는 코칭·에스컬레이션 1회+) 충족 시 대장 재량 금지, 미파견은 리포트에 사유·근거 필수 기재 (근거: gs-w06-w08-w05·onnx-session-share-abort·run-report-persistence 3건 조건 충족인데 미발동)
+- [ ] 구현가 팩에 경계·단위 명시 의무 — 절단/상한의 바이트·문자 구분, 산출 지표의 분모·분자 정의를 팩에 적고 워커가 self_check로 되읽기 (근거: telemetry-p1 절단 단위 혼선·telemetry-p2 채택률 의미 역전)
+- [ ] 미해결 유형 태그 표준화 — 미해결 항목마다 [실가동미반영|검증공백|승인대기|원인미규명|범위밖|보안잔여] 1개 부착해 회고 집계 자동화 (근거: admin-account-view·telemetry-p25·gs-w07-w09)
