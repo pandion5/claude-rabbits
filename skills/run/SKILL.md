@@ -138,8 +138,9 @@ argument-hint: <완료까지 자율로 처리할 작업>
 
 - background 파견 직후 `ScheduleWakeup(T)` 장전(reason에 워커명). 여러 워커면 최솟값 T 하나로 합장전.
 - **대기 중 턴 종료 규약**: 완료알림 또는 사용자 응답(안전밸브 질문 등)을 기다리며 턴을 정상
-  종료할 때는 `.rabbits/run-active.md`를 `.rabbits/run-waiting.md`로 개명(mv)해 Stop hook
-  가드를 일시 해제한다 — 개명 없이 대기하면
+  종료할 때는 `.rabbits/run-active.md`를 `.rabbits/run-waiting.md`로 개명(mv)한 뒤 **`touch`로
+  mtime을 갱신**해 Stop hook 가드를 일시 해제한다(mv는 mtime을 보존하므로 touch를 빼면
+  self-audit 검사 2가 전환 시각을 못 읽어 무결점 런도 FAIL한다) — 개명 없이 대기하면
   가드가 매 턴 종료를 반복 차단해 하니스 8회 block 캡까지 턴을 낭비한다. 완료알림 도착이나
   사용자 발화로 작업을 재개하면 즉시 `.rabbits/run-waiting.md`를 `.rabbits/run-active.md`로
   원복해 가드를 되살린다.
@@ -204,7 +205,7 @@ argument-hint: <완료까지 자율로 처리할 작업>
   백로그가 비었거나 연쇄 상한에 닿았을 때만 아래 마커 삭제로 진행한다.
 - **자기 감사**: 마커 삭제 직전 `sh scripts/self-audit.sh --in-run`, 삭제 직후 `sh scripts/self-audit.sh`를
   돌려 FAIL 0을 확인한다 — FAIL이면 고치고 재실행한다(마커 잔존·가드 off 커밋·보고서 절 누락·README 드리프트·미푸시).
-- **런 마커 삭제**: 최종 리포트 출력 후 `.rabbits/run-active.md`를 삭제한다(종료 가드 해제).
+- **런 마커 삭제**: 최종 리포트 출력 후 마커를 삭제한다(종료 가드 해제) — 대기 상태로 끝났으면 실재 파일명은 `run-waiting.md`이니 삭제 전에 확인한다.
 
 ## 코드 산출물 표준
 
