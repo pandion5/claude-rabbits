@@ -122,3 +122,8 @@
 
 - 단계 4에 완료알림 도착 즉시 개별 검토 규칙이 있고 단계 6 통합과 역할 분담이 모순 없이 읽히는가 — 단계 4 구간에 즉시성·단일 워커·배리어 부정·단계 6 위임 4패턴이 각 1건 이상이고, 단계 6 통합 불릿에 전원 대기 한정 문구가 1건 (검증: `S=$(awk '/^## 단계 4 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE '완료알림이 도착하는 즉시|그 워커만|배리어를 두지 않는다|단계 6 통합에서만' | sort -u | wc -l` = 4 + `grep -c '전원 대기는 여기서만' skills/run/SKILL.md` = 1)
 - 단계 4에 전제 반증 전파 규칙이 있고 판정의 잠정성·단계 6 최종 확정이 명시되는가 — 단계 4 구간에 반증 신호·재검토 복귀·잠정·단계 6 확정 4패턴이 각 1건 이상 (검증: `S=$(awk '/^## 단계 4 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'ASSUMPTION_INVALIDATED|재검토 대상으로|잠정|최종 확정은 단계 6' | sort -u | wc -l` = 4)
+
+## 읽기전용 에이전트 프로필
+- SKILL의 파견 규칙이 플러그인 접두사를 포함하는가 — 플러그인 에이전트는 `rabbits:` 접두사가 없으면 파견이 실패한다 (검증: `grep -c 'rabbits:rabbits-readonly' skills/run/SKILL.md` >= 1 + 접두사 없는 단독 표기가 규칙 문장에 남아 있지 않은가 육안 확인)
+
+- `agents/rabbits-readonly.md`가 실재하고 frontmatter 3필드(`name`·`description`·`tools: Read, Grep, Glob, Bash`)를 갖췄으며, 단계 2 구간에 이 프로필 파견 규칙과 단서 3종(변경 워커 불가·스킬 호출 시 불가·구버전 세션 폴백)이 모두 있는가 — frontmatter 3패턴 전부 ≥1건, 단계 2 구간 4패턴 전부 ≥1건 (검증: `test -f agents/rabbits-readonly.md && grep -coE '^name: rabbits-readonly$|^description: .+|^tools: Read, Grep, Glob, Bash$' agents/rabbits-readonly.md` = 3 + `S=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'rabbits-readonly|Write/Edit 없음|스킬 호출|구버전 세션' | sort -u | wc -l` = 4. 대조군: 같은 awk를 단계 3에 적용하면 0건)

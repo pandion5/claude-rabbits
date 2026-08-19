@@ -139,6 +139,8 @@ rabbits/
 ├── .claude-plugin/
 │   ├── marketplace.json
 │   └── plugin.json
+├── agents/
+│   └── rabbits-readonly.md  # 읽기전용 워커 공용 프로필 (툴 축소 → 프리필 절감)
 ├── hooks/
 │   ├── hooks.json        # Stop 이벤트 → 종료 가드 등록
 │   └── stop-guard.sh     # 마커 기반 종료 차단 (POSIX sh)
@@ -153,7 +155,25 @@ rabbits/
 └── README.md
 ```
 
-`agents/` 폴더 없음 — 워커는 즉석 일회용(파일 저장 X).
+워커는 기본적으로 즉석 일회용(파일 저장 X). 사전정의 에이전트는 `rabbits-readonly` 하나뿐 —
+파일을 안 고치는 워커의 툴을 좁혀 기동 프리필을 줄이는 공용 프로필이다. 역할 구분은 아키타입
+프롬프트가 하므로 역할별 파일은 만들지 않는다.
+
+측정값(워커 1명 기동 프리필):
+
+| 툴 조합 | 스킬 목록 주입 | 프리필 토큰 |
+|---|---|---|
+| 전체 툴셋 (기존 워커) | 1건 | 34,111 (중앙값) |
+| Read, Grep, Glob, Skill | 1건 | 19,585 |
+| Read, Grep, Glob, Bash, PowerShell | 0건 | 12,348 |
+| Read, Grep, Glob, Bash (`rabbits-readonly`) | 0건 | 8,990 |
+| Read, Grep, Glob | 0건 | 7,700 |
+
+절감의 핵심은 `Skill` 툴 제외다 — 있으면 스킬 목록이 주입되고, 없으면 안 붙는다.
+
+파견할 때는 플러그인 접두사를 붙여 `rabbits:rabbits-readonly`로 지정한다(접두사를 빼면 파견이 실패한다).
+읽기전용은 **툴 레벨에서 강제되지 않는다** — `Write`·`Edit`은 빠졌지만 `Bash`가 남아 있어 마음먹으면
+파일을 바꿀 수 있다. 프로필 본문의 규율로 지탱되는 것이며, 하드 격리가 필요하면 워크트리 격리를 함께 쓴다.
 
 ## 스모크 테스트 체크리스트
 
