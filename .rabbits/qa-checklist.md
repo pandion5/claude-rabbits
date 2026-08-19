@@ -15,6 +15,8 @@
 - 코어 아키타입 8종 한글명이 README.md 코어 표와 archetypes.md `## N. 이름 (영문)` 헤더 8개 사이 번호·명칭 모두 일치하는가(번호순 대조) — 8개명 두 위치에서 번호·철자 일치
 - 버전 문자열이 리포 활성 영역에서 `.claude-plugin/plugin.json` 단 한 곳에만 선언되는가(plugin.json의 version 값을 읽어 그 문자열을 json·md 전체에서 grep — 이력·인용 성격인 docs/·.superpowers/·이 체크리스트 자신·README 스모크 체크리스트의 이력 버전 표기(Tn 라벨), 별도 배포 단위인 codex/·런 보고서 보관소인 reports/는 제외) — 선언 매치 정확히 1건(plugin.json), 타 파일 버전 재선언 없음
 
+- 단계 0 시작 선언이 플러그인 버전을 포함하도록 지시하는가 — 시작 선언 줄에 `v<버전>` 자리와 plugin.json 참조가 함께 있어야 한다 (검증: `grep -c 'rabbits v<버전> 오케스트레이션 시작' skills/run/SKILL.md` = 1 + `grep -c 'claude-plugin/plugin.json' skills/run/SKILL.md` >= 1)
+
 ## Stop hook 종료 가드
 
 - Stop hook 마커 부재/존재 2케이스 계약 — 마커 없으면 stdout 빈 값·exit 0, 마커 있으면 decision=="block"이고 reason 비어있지 않은 유효 JSON·exit 0 (검증: CLAUDE_PROJECT_DIR을 임시 디렉토리로 지정해 `sh hooks/stop-guard.sh` 실행 후 stdout을 `python -c "import json,sys; json.load(sys.stdin)"`로 파싱하고 exit code 확인)
