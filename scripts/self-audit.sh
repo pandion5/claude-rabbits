@@ -113,6 +113,7 @@ fi
 # FAIL이 아니라 WARN인 이유: 발동은 위반의 "실행"이 아니라 "차단"이고 이미 지난 일이라 고쳐서
 # 없앨 수 없다 — FAIL로 두면 "게이트 FAIL 0" 조건이 로그 삭제(증거 인멸)를 유도한다.
 BLOCKLOG="$REPO/.rabbits/run-blocks.log"
+BLOCKS_N=0
 if [ -s "$BLOCKLOG" ]; then
   n=$(grep -c '^[0-9]' "$BLOCKLOG" 2>/dev/null || true)
   # 숫자가 아니면 0으로 — set -e 아래에서 `[ "" -gt 0 ]`이 게이트 전체를 죽이지 않게 한다.
@@ -124,6 +125,7 @@ if [ -s "$BLOCKLOG" ]; then
 본문에 '- 대기: <epoch>' append, 재개 즉시 원복 + '- 재개: <epoch>' append하라.
 반복되면 보고서 '## 미해결'에 적어 드러내라(로그는 런 종료 후 다음 비런 턴에 훅이 자동으로 비운다)."
     warn "2보조. 미신고 대기 — Stop hook 차단 ${n}회(마지막 $last)" "$c"
+    BLOCKS_N="$n"   # 검사 3이 보고서 은폐 여부를 판정할 때 쓴다
   fi
 fi
 
@@ -224,7 +226,15 @@ else
   # 앵커 뒤 경계 — `## 미해결없음` 같은 유사 제목이 절을 대신 통과시키지 못하게 한다.
   grep -qE '^## 미해결([[:space:]]|$)' "$REPORT" || c="$base에 '## 미해결' 절이 없다 — 남은 것이 없어도
 '## 미해결' 절을 만들고 '없음'이라고 적어라(은폐와 구분하기 위해 절 자체는 필수)."
-  report "4. 미해결 절 — 이번 런 보고서에 미해결 절이 있어야 한다" "$c"
+  # 2보조 WARN이 떴는데 보고서가 침묵하면 은폐다 — WARN 단독으로는 아무것도 강제하지 못한다.
+  # 신고하면 PASS, 숨기면 FAIL이라 로그를 지울 유인이 생기지 않는다(감사 제안).
+  # 검사 3이 아니라 여기 둔 이유: 검사 3은 감사 미발동 런에서 SKIP으로 빠져 은폐 검사가 안 돈다.
+  if [ "${BLOCKS_N:-0}" -gt 0 ] && ! grep -q '미신고 대기' "$REPORT"; then
+    c="$c
+2보조가 미신고 대기 ${BLOCKS_N}회를 잡았는데 보고서에 '미신고 대기' 언급이 없다 —
+'## 미해결'에 몇 회였는지 적어 드러내라(적으면 통과, 숨기면 이 검사가 FAIL이다)."
+  fi
+  report "4. 미해결 절·미신고 대기 신고 — 빠진 것 없이 적어야 한다" "$c"
 fi
 
 # ── 5. README 드리프트 ──────────────────────────────────────────────────────
@@ -270,7 +280,7 @@ else
     c="원격에 반영되지 않은 커밋이 ${ahead}건이다 — \`git push\`로 반영하고 런을 끝내라."
   fi
   # 릴리스 후 제품 파일을 고치고 커밋하지 않으면 rev-list로는 안 잡힌다(감사 실증).
-  dirty=$(git -C "$REPO" status --porcelain -- skills scripts agents hooks .rabbits/qa-checklist.md README.md README.en.md 2>/dev/null || echo '')
+  dirty=$(git -C "$REPO" status --porcelain -- skills scripts agents hooks .claude-plugin .gitignore .rabbits/qa-checklist.md README.md README.en.md 2>/dev/null || echo '')
   [ -n "$dirty" ] && c="$c
 미커밋 제품 변경이 남아 있다 — 커밋·푸시하거나 되돌려라:
 $dirty"
