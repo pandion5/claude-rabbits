@@ -23,7 +23,7 @@
 
 - Stop hook 마커 부재/존재 2케이스 계약 — 마커 없으면 stdout 빈 값·exit 0, 마커 있으면 decision=="block"이고 reason 비어있지 않은 유효 JSON·exit 0 (검증: CLAUDE_PROJECT_DIR을 임시 디렉토리로 지정해 `sh hooks/stop-guard.sh` 실행 후 stdout을 `python -c "import json,sys; json.load(sys.stdin)"`로 파싱하고 exit code 확인)
 - hooks.json Stop 이벤트 스키마 정합 — hooks.Stop[0].hooks[0].type이 "command"이고 command가 stop-guard.sh를 가리키는 훅이 등록되어 있음 (검증: `python -c "import json; d=json.load(open('hooks/hooks.json',encoding='utf-8')); assert d['hooks']['Stop'][0]['hooks'][0]['type']=='command'"`)
-- SKILL.md 마커 생명주기 지시 존재 — 단계 0에 `.rabbits/run-active.md` 생성(Write) 지시, 단계 6에 최종 리포트 후 마커 삭제 지시가 명시되어 하니스 종료 차단을 오케스트레이터가 스스로 해제 가능 (검증: `grep -n "run-active.md" skills/run/SKILL.md`로 단계 0 생성 문맥과 단계 6 삭제 문맥 두 곳 모두 존재하는지 확인)
+- SKILL.md 마커 생명주기 지시 존재 — 단계 0에 `.rabbits/run-active.md` 생성(Write) 지시, 단계 6에 최종 리포트 후 마커 삭제 지시가 명시되어 하니스 종료 차단을 오케스트레이터가 스스로 해제 가능 (검증: `grep -c '런 마커 생성' skills/run/SKILL.md` = 1 + `awk '/^## 단계 6 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '런 마커 삭제'` = 1. 주의: 단계 6 삭제 불릿은 실재 파일명을 확인하라는 문구라 `run-active.md` 리터럴을 포함하지 않는다 — 파일명 grep으로 찾지 말 것)
 - SKILL.md에 마커 이동·삭제 금지 규칙이 있고 허용 예외가 구분돼 읽히는가 — 단계 0 마커 불릿 뒤에 금지 규칙 1건이 있고, 같은 불릿 안에서 허용 경로 2종("단계 6" 삭제 / `run-waiting.md` 개명)이 언급된다 (검증: `grep -c "마커 이동·삭제 금지" skills/run/SKILL.md` = 1 + `awk '/마커 이동·삭제 금지/,/^$/' skills/run/SKILL.md | grep -oE "단계 6|run-waiting.md" | wc -l` = 2)
 
 ## 지식베이스 연동
@@ -130,4 +130,10 @@
 - `agents/rabbits-readonly.md`가 실재하고 frontmatter 3필드(`name`·`description`·`tools: Read, Grep, Glob, Bash`)를 갖췄으며, 단계 2 구간에 이 프로필 파견 규칙과 단서 3종(변경 워커 불가·스킬 호출 시 불가·구버전 세션 폴백)이 모두 있는가 — frontmatter 3패턴 전부 ≥1건, 단계 2 구간 4패턴 전부 ≥1건 (검증: `test -f agents/rabbits-readonly.md && grep -coE '^name: rabbits-readonly$|^description: .+|^tools: Read, Grep, Glob, Bash$' agents/rabbits-readonly.md` = 3 + `S=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'rabbits-readonly|Write/Edit 없음|스킬 호출|구버전 세션' | sort -u | wc -l` = 4. 대조군: 같은 awk를 단계 3에 적용하면 0건)
 
 ## 런 자기 감사 스크립트
-- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 off 커밋·감사 결과 절·미해결 절·README 드리프트·미푸시)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `test -f scripts/self-audit.sh && grep -oE '(report|skip) "[1-6]\.' scripts/self-audit.sh | grep -oE '[1-6]' | sort -u | wc -l` = 6 + `grep -c 'self-audit.sh --in-run' skills/run/SKILL.md` >= 1)
+- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 off 커밋·감사 결과 절·미해결 절·README 드리프트·미푸시)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `sh scripts/self-audit.sh --in-run 2>&1 | grep -cE '^\[(PASS|FAIL|SKIP)\] [1-6]\.'` = 6 — 선두 숫자만 세면 이름·조건이 바뀌어도 통과하므로 **실행 출력**으로 센다. 추가: `grep -c '삭제 \*\*직전\*\*' skills/run/SKILL.md` >= 1 + `grep -c '삭제 \*\*직후\*\*' skills/run/SKILL.md` >= 1 로 전후 규칙 둘 다 확인)
+
+## 마커 런 레저
+
+- 마커가 런 레저로 규정되고 self-audit이 그걸 읽는가 — 단계 0에 `- 보고서:` 경로 기입, 단계 3.5에 `- 대기:`/`- 재개:` epoch 누적이 지시돼 있고, 스크립트가 세 키를 모두 파싱해야 한다 (검증: `awk '/^## 단계 0/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '보고서:'` >= 1 + `awk '/^## 단계 3.5/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -coE '대기:|재개:'` >= 1 + `grep -coE '^\s*- 보고서:|- 대기:|- 재개:' scripts/self-audit.sh` >= 3)
+- 보고서 서식 부재가 SKIP이 아니라 FAIL인가 — 표를 안 쓰면 감사를 면제받는 경로를 막은 항목이다. 실측 39건 중 10건이 이 경로로 검사를 빠져나갔다 (검증: 임시 디렉토리에 `## 워커 메타` 절 없는 보고서와 마커를 만들어 `sh scripts/self-audit.sh --in-run` 실행 → 검사 3이 `[FAIL]`이고 사유에 '워커 표'가 언급되는지 확인. 대상 리포에서 실행하지 말 것)
+

@@ -2,7 +2,8 @@
 # rabbits 릴리스 수순 묶음 — 검증 → 버전 상향 → 선별 스테이징 → 커밋 → push → 플러그인 갱신.
 # 사용법: sh scripts/release.sh [--dry-run] <new-version> "<commit subject>" [파일...]
 #   파일 목록을 생략하면 이미 스테이징된 목록을 그대로 대상으로 삼는다.
-# 파괴적 동작 없음(rm·reset·force 미사용). 검증을 모두 통과한 뒤에만 add를 시작해 부분 커밋을 막는다.
+# 파괴적 동작 없음(rm·reset·force 미사용). 검증을 모두 통과한 뒤에만 add를 시작한다 — 막는 것은
+# 검증 실패 상태의 커밋이고, 커밋 후 push가 실패하면 로컬 커밋은 남는다(검사 6 미푸시가 그걸 잡는다).
 set -eu
 
 # 공통 규칙 말미 고정 문구 — archetypes.md + archetypes-ext/*.md 통틀어 정확히 102건이어야 한다.
