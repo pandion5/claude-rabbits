@@ -218,3 +218,5 @@ argument-hint: <완료까지 자율로 처리할 작업>
 
 모든 워커 프롬프트에 명시한다: **2칸 들여쓰기, 한국어 주석, 리포 관례 준수.**
 대상 리포에 `.rabbits/config.md`가 있으면 그 값이 위 기본값을 대체한다.
+Windows 워커 주의: python으로 한글을 출력하면 콘솔 기본 인코딩(cp949) 탓에 `UnicodeEncodeError`가 난다 —
+`PYTHONIOENCODING=utf-8`을 붙여 실행하고, heredoc은 백슬래시를 삼킬 수 있으니 스크립트는 파일로 써서 실행하라.

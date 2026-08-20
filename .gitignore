@@ -2,6 +2,9 @@
 .rabbits/run-active.md
 .rabbits/run-waiting.md
 
+# Stop hook 차단 로그 — 세션 로컬 증거(self-audit 검사 2가 읽는다), 커밋 대상 아님
+.rabbits/run-blocks.log
+
 # rabbits 워크트리 격리 — 워커 전용 임시 워크트리, embedded repo 스테이징 방지
 .claude/worktrees/
 
