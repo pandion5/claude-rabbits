@@ -130,7 +130,7 @@
 - `agents/rabbits-readonly.md`가 실재하고 frontmatter 3필드(`name`·`description`·`tools: Read, Grep, Glob, Bash`)를 갖췄으며, 단계 2 구간에 이 프로필 파견 규칙과 단서 3종(변경 워커 불가·스킬 호출 시 불가·구버전 세션 폴백)이 모두 있는가 — frontmatter 3패턴 전부 ≥1건, 단계 2 구간 4패턴 전부 ≥1건 (검증: `test -f agents/rabbits-readonly.md && grep -coE '^name: rabbits-readonly$|^description: .+|^tools: Read, Grep, Glob, Bash$' agents/rabbits-readonly.md` = 3 + `S=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'rabbits-readonly|Write/Edit 없음|스킬 호출|구버전 세션' | sort -u | wc -l` = 4. 대조군: 같은 awk를 단계 3에 적용하면 0건)
 
 ## 런 자기 감사 스크립트
-- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 off 커밋·감사 결과 절·미해결 절·README 드리프트·미푸시)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `sh scripts/self-audit.sh --in-run 2>&1 | grep -cE '^\[(PASS|FAIL|SKIP)\] [1-6]\.'` = 6 — 선두 숫자만 세면 이름·조건이 바뀌어도 통과하므로 **실행 출력**으로 센다. 추가: `grep -c '삭제 \*\*직전\*\*' skills/run/SKILL.md` >= 1 + `grep -c '삭제 \*\*직후\*\*' skills/run/SKILL.md` >= 1 로 전후 규칙 둘 다 확인)
+- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 off 커밋·보고서 서식·감사 결과 절·미해결 절·README 드리프트·미푸시·미커밋 변경)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `sh scripts/self-audit.sh --in-run 2>&1 | grep -oE '^\[(PASS|FAIL|SKIP)\] [1-6]\. [^—]+' | sed 's/^\[[A-Z]*\] //' | sort` 결과가 아래 6줄과 **축자 일치**해야 한다 — 선두 숫자만 세면 이름·조건이 바뀌어도 통과하므로 **이름까지** 대조한다: `1. 마커 잔존` / `2. 가드 off 커밋` / `3. 보고서 서식·감사 결과 절` / `4. 미해결 절` / `5. README 드리프트` / `6. 미푸시 커밋·미커밋 변경`. 검사명을 바꾸면 이 항목도 함께 갱신하라(그게 드리프트 감지의 요점이다). 추가: `grep -c '삭제 \*\*직전\*\*' skills/run/SKILL.md` >= 1 + `grep -c '삭제 \*\*직후\*\*' skills/run/SKILL.md` >= 1 로 전후 규칙 둘 다 확인)
 
 ## 마커 런 레저
 

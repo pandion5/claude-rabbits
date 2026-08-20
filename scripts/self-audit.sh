@@ -120,7 +120,7 @@ if [ -n "$MARKER" ]; then
     # 절대경로(/… 또는 E:/…)면 그대로, 상대경로면 리포 루트 → 보고서 디렉토리 순으로 찾는다.
     case "$rel" in
       /*|[A-Za-z]:*) cand="$rel" ;;
-      *) cand="$REPO/$rel 또는 $DIR/$rel" ;;
+      *) cand="$REPO/$rel" ;;   # ponytail: DIR은 이미 리포명 하위라 $DIR/$rel은 존재 불가 경로였다
     esac
     if [ -f "$rel" ]; then REPORT="$rel"
     elif [ -f "$REPO/$rel" ]; then REPORT="$REPO/$rel"
@@ -150,8 +150,12 @@ else
     f && /^\|/ {
       probe = $0
       gsub(/[|: 	-]/, "", probe)
-      if (probe == "") next   # 구분선
-      if (!hdr) { hdr = 1; next }   # 헤더 행
+      if (probe == "") { sep = 1; if (first) { first = 0 }; next }   # 구분선
+      # 헤더 행은 **구분선이 뒤따를 때만** 소비한다. 무조건 소비하면 헤더 없는 표에서
+      # 워커가 1명 적게 세어져 3명 런이 감사 미발동으로 빠져나간다(감사 실증).
+      if (!seen1) { seen1 = 1; cand = 1; next }
+      if (cand && !sep) { n++ }   # 구분선이 안 왔다 = 첫 행도 워커다
+      cand = 0
       n++
     }
     END { print n + 0 }
@@ -232,7 +236,12 @@ else
   elif [ "$ahead" != 0 ]; then
     c="원격에 반영되지 않은 커밋이 ${ahead}건이다 — \`git push\`로 반영하고 런을 끝내라."
   fi
-  report "6. 미푸시 커밋 — 로컬에만 남은 커밋이 없어야 한다" "$c"
+  # 릴리스 후 제품 파일을 고치고 커밋하지 않으면 rev-list로는 안 잡힌다(감사 실증).
+  dirty=$(git -C "$REPO" status --porcelain -- skills scripts agents hooks .rabbits/qa-checklist.md README.md README.en.md 2>/dev/null || echo '')
+  [ -n "$dirty" ] && c="$c
+미커밋 제품 변경이 남아 있다 — 커밋·푸시하거나 되돌려라:
+$dirty"
+  report "6. 미푸시 커밋·미커밋 변경 — 로컬에만 남은 것이 없어야 한다" "$c"
 fi
 
 if [ "$FAILED" = 0 ]; then
