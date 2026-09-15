@@ -70,7 +70,7 @@ git (intentionally — for team sharing and history).
 
 | Stage | Name | What it does |
 |-------|------|---------------|
-| 0 | Intake | Pin down the goal and the definition of success |
+| 0 | Intake | Pin down the goal and the definition of success; write the intent record |
 | 1 | Planning | Decompose into subtasks → mini DAG + completion criteria; auto-decide specialist teams; build the roster; assemble the context pack once |
 | 2 | Cast | 101 archetypes (8 core + 93 extended, lazy-loaded by domain) + 6 specialist team presets (tech, legal, security, search, QA, QC) + model and time-limit assignment |
 | 3 | Dispatch | Independent tasks run in parallel, dependent tasks run sequentially, long-running tasks run in background |
@@ -88,6 +88,7 @@ git (intentionally — for team sharing and history).
 | Security team | Checks for vulnerabilities, patches them, and rescans (defensive only) |
 | Search team | Multimodal web + code sourcing, supports other teams |
 | QA team | Functional verification and regression — walks the entire persistent QA list (`.rabbits/qa-checklist.md`) |
+| QC team | Audits the quality of deliverables — read-only, no edits; the final call is the user's (HITL) |
 
 The lead rabbit deploys these automatically based on the nature of the task — no separate command
 needed.

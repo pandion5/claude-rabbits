@@ -11,6 +11,18 @@ PHRASE='대장은 공통 규칙의 `rabbits-result` 블록만 읽는다. 반드�
 PHRASE_EXPECTED=102
 PLUGIN_JSON='.claude-plugin/plugin.json'
 
+# 커밋 트레일러 — 모델명과 세션 URL은 런마다 달라지므로 환경변수로 주입한다.
+# 하드코딩하면 다음 런부터 남의 세션 URL이 이력에 박힌다.
+#   RABBITS_CO_AUTHOR      Co-Authored-By 줄 전체 (미설정 시 아래 기본값)
+#   RABBITS_CLAUDE_SESSION 세션 URL (설정된 경우에만 Claude-Session 줄을 덧붙인다)
+CO_AUTHOR="${RABBITS_CO_AUTHOR:-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>}"
+TRAILERS="$CO_AUTHOR"
+if [ -n "${RABBITS_CLAUDE_SESSION:-}" ]; then
+  # 한 -m 안에 두 줄을 넣어야 git 트레일러 블록으로 붙는다(-m 두 번이면 빈 줄이 끼어든다).
+  TRAILERS="$TRAILERS
+Claude-Session: ${RABBITS_CLAUDE_SESSION}"
+fi
+
 fail() {
   echo "[중단] $1" >&2
   exit 1
@@ -129,14 +141,14 @@ fi
 
 if [ "$DRY_RUN" = "1" ]; then
   echo "[드라이런] git add $*"
-  echo "[드라이런] git commit -m \"$SUBJECT\" -m \"Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>\""
+  printf '[드라이런] git commit -m "%s" -m "%s"\n' "$SUBJECT" "$TRAILERS"
   echo "[드라이런] git push"
   echo "[드라이런] claude plugin update rabbits@rabbits"
   exit 0
 fi
 
 git add -- "$@"
-git commit -m "$SUBJECT" -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+git commit -m "$SUBJECT" -m "$TRAILERS"
 git push
 # 플러그인 갱신은 리포 작업 완료 후의 로컬 편의 단계 — 실패해도 커밋·push는 이미 유효하므로 경고만.
 claude plugin update rabbits@rabbits || echo "[경고] claude plugin update 실패 — 수동으로 실행하라." >&2
