@@ -155,3 +155,10 @@
 - 의도 파일 경로가 마커 레저와 런 보고서 양쪽에 연결되는가 — 단계 0에 `- 의도:` 기입 지시, 단계 6에 보고서 첫 줄 링크 지시가 있어야 한다. 한쪽만 있으면 의도 파일이 고아가 된다 (검증: `awk '/^## 단계 0/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '의도:'` >= 1 + `grep -c '의도에서 보고서까지' skills/run/SKILL.md` = 1)
 - README 한/영 단계표 0단계 설명이 양쪽 다 의도 기록을 언급하는가 — 한글판만 고쳐 영문판에 거짓 진술을 출하한 전례가 있다 (검증: `grep -c '의도 기록' README.md` >= 1 + `grep -ci 'intent record' README.en.md` >= 1)
 
+## graft 연동
+
+- graft 연동이 조건부인가 — graft는 선택 도구다. 없는 환경에서 런이 멈추면 공개 배포물이 남의 머신에서 깨진다 (검증: `awk '/^## 단계 1/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c 'command -v graft'` = 1 + 같은 구간에 `grep -c '없으면 위 방식 그대로'` = 1)
+- `ask`의 조용한 실패가 명시돼 있는가 — `callers`·`skeleton`은 실패 시 exit 1이지만 `ask`는 빈 결과에도 **exit 0**이다. 이 경고가 빠지면 대장이 빈 결과를 좌표로 믿고 팩에 넣는다 (검증: `awk '/^## 단계 1/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c 'exit 0'` = 1)
+- 경로 인자 필수와 `--deep` 금지가 함께 적혀 있는가 — 경로를 빼면 cwd 상위를 훑어 엉뚱한 리포를 집고, `--deep`은 소스를 외부 모델로 보낸다 (검증: `awk '/^## 단계 1/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '경로 인자를 반드시 넘긴다'` = 1 + 같은 구간 `grep -c -- '--deep'` = 1. **패턴 안에 백틱을 넣지 말 것** — 인라인 코드가 조기 종료돼 명령이 두 동강 난다. `--`는 `--deep`을 grep 옵션으로 해석하지 않게 한다)
+- README 한/영 양쪽에 graft 연동이 선택임을 적었는가 (검증: `grep -c 'graft 연동 (선택)' README.md` = 1 + `grep -c 'graft integration (optional)' README.en.md` = 1)
+

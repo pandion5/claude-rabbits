@@ -66,6 +66,15 @@ guard blocks premature exit and helps sustain the chaining (the same 8-block cap
 fallback limits apply; chaining is capped at 10 items per invocation). `backlog.md` is tracked by
 git (intentionally — for team sharing and history).
 
+### graft integration (optional)
+
+If [graft](https://github.com/trailhq/Graft) is installed, stage 1 uses it to scout coordinates. It is
+optional: without it the lead rabbit falls back to the existing approach. The lead runs `graft build`
+once against the target repo to produce the structural graph (graft adds `graft/` to `.gitignore`
+itself), then feeds the `file:line` hits from `callers`, `skeleton` and `ask` into the context pack.
+The LLM summarization pass (`--deep`) is not used — it sends source to an external model, which needs a
+separate decision for private code.
+
 ## How it works (6 stages)
 
 | Stage | Name | What it does |
