@@ -75,6 +75,20 @@ itself), then feeds the `file:line` hits from `callers`, `skeleton` and `ask` in
 The LLM summarization pass (`--deep`) is not used — it sends source to an external model, which needs a
 separate decision for private code.
 
+### Project setup
+
+```
+/rabbits:setup
+```
+
+When many plugins are installed, the skill list injected into the session is truncated and later
+skills arrive with empty descriptions. This skill reports the detected stack along with the evidence
+for it, then enables only the plugins of the profile you choose among web, mobile and docs. The
+choice is written to `.claude/settings.json`, or to `.claude/settings.local.json` when the local
+scope is given. Plugins that are already on and plugins that are not installed are reported
+separately, and nothing is turned off. Plugins load at session start, so the change applies from the
+next session. It runs only when you invoke it, never on its own during a run.
+
 ## How it works (6 stages)
 
 | Stage | Name | What it does |
@@ -154,6 +168,7 @@ rabbits/
 │   └── stop-guard.sh     # Marker-based exit blocking (POSIX sh)
 ├── skills/
 │   ├── retro/SKILL.md    # Retrospective — extracts patterns and weaknesses from run reports
+│   ├── setup/SKILL.md    # Project setup — detects the stack, then enables plugins in project scope
 │   └── run/
 │       ├── SKILL.md          # 6-stage protocol
 │       ├── archetypes.md     # 8 core archetypes + shared rules + extended catalog index
