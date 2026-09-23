@@ -141,7 +141,7 @@
 
 - 종료 가드가 차단할 때 `.rabbits/runs/<세션>.blocks`에 epoch을 남기고 마커 삭제 뒤 첫 종료에서 로그를 지우는가 — 대장 자기 신고가 못 잡는 가드 차단의 유일한 증거다 (검증: behavior-check 사이클 1의 '차단 로그 1줄'과 '지난 런 차단 로그가 지워지지 않았다' 두 판정이 모두 통과, 즉 사이클 1 PASS. 대상 리포에서 실행하지 말 것)
 - 가드 차단을 숨기면 검사 4가 FAIL인가 — WARN 단독으로는 강제력이 없어 검사 4에 연결했다. 신고하면 PASS라 로그를 지울 유인이 생기지 않는다 (검증: 임시 git 리포에 `.rabbits/runs/S.md`(`- 보고서: <보고서 경로>` 줄 포함)와 `.rabbits/runs/S.blocks` 2줄, `## 워커 메타` 표와 `## 미해결` 절이 있는 보고서를 두고 `sh scripts/self-audit.sh --repo <임시 리포> --session S --in-run` 실행 → 보고서에 '가드 차단' 문자열이 없으면 `[FAIL] 4`, 추가하면 `[PASS] 4`)
-- 훅 수정은 자기 자신의 런을 관측할 수 없다는 한계가 문서에 남아 있는가 — 런타임은 워킹트리가 아니라 `~/.claude/plugins/cache/<플러그인>/<버전>/`의 스냅샷을 실행하므로 훅 변경은 릴리스·캐시 갱신 뒤부터 유효하다 (검증: `grep -c '캐시' skills/run/SKILL.md` >= 1)
+- 런타임이 설치 방식에 따라 다르다는 서술이 문서에 있는가 — GitHub 설치는 `~/.claude/plugins/cache/<플러그인>/<버전>/` 스냅샷을, 로컬 디렉토리 마켓플레이스 설치는 원본 리포를 그대로 실행한다(2.1.280 실측). 스킬 본문과 훅 등록은 세션 시작 때, 훅 스크립트는 실행 때마다 읽힌다 (검증: `grep -c '캐시 스냅샷' skills/run/SKILL.md` >= 1 + `grep -c '원본 리포를 그대로' skills/run/SKILL.md` >= 1 + `grep -c '원본 리포를 그대로' README.md` >= 1 + `grep -c 'runs the source repo' README.en.md` >= 1)
 
 ## 릴리스 트레일러
 

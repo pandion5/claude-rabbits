@@ -47,8 +47,10 @@ claude --plugin-dir "<repo path>"
 
 - In POSIX shells such as Git Bash, always quote the path (to keep backslashes from being consumed).
 - To pick up plugin file changes: restart the session, or run `/reload-plugins` mid-session.
-  The global install is a cached snapshot — after changing the repo, run
-  `claude plugin update rabbits@rabbits`.
+  A global install from GitHub is a cached snapshot, so after changing the repo you run
+  `claude plugin update rabbits@rabbits`. A local directory-marketplace install runs the source repo
+  in place (measured on 2.1.280). Edits then reach the hook scripts of sessions that are already
+  running, so keep work in progress in a separate worktree.
 
 ## Usage
 

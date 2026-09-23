@@ -50,7 +50,9 @@ claude --plugin-dir "<리포 경로>"
 
 - Git Bash 등 POSIX 셸에서는 경로를 반드시 따옴표로 감싼다(백슬래시 소비 방지).
 - 플러그인 파일 변경 반영: 세션 재시작 또는 세션 중 `/reload-plugins`.
-  전역 설치본은 캐시 스냅샷 — 리포 변경 후 `claude plugin update rabbits@rabbits`.
+  GitHub에서 설치한 전역 설치본은 캐시 스냅샷이라 리포 변경 후 `claude plugin update rabbits@rabbits`가
+  필요하다. 로컬 디렉토리 마켓플레이스로 설치했다면 원본 리포를 그대로 실행한다(2.1.280 실측). 이때 리포를
+  고치면 떠 있는 세션의 훅 스크립트에도 바로 반영되니, 작업 중인 변경은 별도 워크트리에서 한다.
 
 ## 사용
 
