@@ -1,15 +1,31 @@
 #!/bin/sh
 # rabbits 자기 감사 — 런 종료 직후 대장이 돌려 자기 규약 위반을 기계적으로 잡는다.
-# 사용법: sh scripts/self-audit.sh [--in-run]   (어느 디렉토리에서 호출해도 무방)
+# 사용법: sh self-audit.sh [--repo DIR] [--session ID] [--in-run]   (어느 디렉토리에서 호출해도 무방)
+#   --repo: 감사할 대상 프로젝트. 생략하면 CLAUDE_PROJECT_DIR, 그것도 없으면 현재 디렉토리의 git 루트.
+#           스크립트 위치로 잡으면 다른 프로젝트 런에서 플러그인 리포를 감사하게 된다(보고서 실증).
+#   --session: 이번 런의 세션 ID. 런 마커는 .rabbits/runs/<세션>.md 이고 검사 1~4가 이것을 런 레저로 읽는다.
+#              마커 본문의 `- 보고서:` 경로가 검사 대상이다.
 #   --in-run: 런 진행 중 실행. 마커 잔존 검사(1번)만 건너뛴다.
-# 검사 2~4는 런 마커(.rabbits/run-active.md 또는 run-waiting.md)를 런 레저로 읽는다 —
-# 마커 본문의 `- 보고서:` 경로가 검사 대상이고, `- 대기:`/`- 재개:` epoch 이력이 대기 구간 근거다.
 # 파괴적 동작 없음(조회만 — rm·reset·force·add 미사용). 파일·git 상태로만 판정되는 것만 검사하고,
 # 사람 판단이 필요한 것(면제 사유의 타당성, 수치 반올림 여부)은 검사하지 않는다.
-# 6검사 각각 PASS/FAIL/SKIP을 출력하고 하나라도 FAIL이면 비제로 종료.
+# 6검사 각각 PASS/FAIL/SKIP/WARN을 출력하고 하나라도 FAIL이면 비제로 종료.
+# 검사 5·6은 rabbits 플러그인 리포 자체를 고치는 런에서만 돈다.
 set -eu
 
-REPO=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO=''
+SESSION=''
+IN_RUN=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) REPO=${2-}; shift 2 ;;
+    --session) SESSION=${2-}; shift 2 ;;
+    --in-run) IN_RUN=1; shift ;;
+    *) echo "알 수 없는 인자: $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$REPO" ] || REPO=${CLAUDE_PROJECT_DIR:-}
+[ -n "$REPO" ] || REPO=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+REPO=$(CDPATH= cd -- "$REPO" && pwd)
 FAILED=0
 
 # 판정 출력 — $1=검사 이름, $2=실패 사유(빈 문자열이면 PASS).
@@ -35,97 +51,49 @@ warn() {
   printf '%s\n' "$2" | sed '/^$/d; s/^/       · /'
 }
 
-IN_RUN=0
-[ "${1-}" = "--in-run" ] && IN_RUN=1
-
-ACTIVE="$REPO/.rabbits/run-active.md"
-WAITING="$REPO/.rabbits/run-waiting.md"
-
-# 런 레저 = 지금 존재하는 마커. 단계 0이 만들고 단계 6이 지우며 대기 전환 시 파일명만 바뀐다.
+RUNS="$REPO/.rabbits/runs"
+# 런 레저 = 이 세션의 마커. 단계 0이 만들고 단계 6이 지운다. 다른 세션 마커는 보지 않는다.
 MARKER=''
-[ -e "$ACTIVE" ] && MARKER="$ACTIVE"
-[ -e "$WAITING" ] && MARKER="$WAITING"
-
-# 파일 mtime(epoch초) — GNU stat 우선, 실패하면 BSD stat.
-mtime() {
-  stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo ''
-}
+BLOCKLOG=''
+if [ -n "$SESSION" ]; then
+  [ -e "$RUNS/$SESSION.md" ] && MARKER="$RUNS/$SESSION.md"
+  BLOCKLOG="$RUNS/$SESSION.blocks"
+fi
 
 # ── 1. 마커 잔존 ────────────────────────────────────────────────────────────
 if [ "$IN_RUN" = 1 ]; then
   skip "1. 마커 잔존" "--in-run 지정 — 런 진행 중이므로 마커 존재가 정상이다."
+elif [ -z "$SESSION" ]; then
+  others=$(ls "$RUNS"/*.md 2>/dev/null | wc -l | tr -d ' ')
+  skip "1. 마커 잔존" "--session 이 없어 이번 런 마커를 특정할 수 없다(runs/ 안 마커 ${others}개)."
 else
   c=''
-  [ -e "$ACTIVE" ] && c="$c
-.rabbits/run-active.md가 남아 있다 — 단계 6 최종 리포트 출력 후 이 마커를 삭제하고 런을 종료하라."
-  [ -e "$WAITING" ] && c="$c
-.rabbits/run-waiting.md가 남아 있다 — 대기에서 재개했다면 run-active.md로 되돌리고, 런이 끝났다면 삭제하라."
+  [ -e "$RUNS/$SESSION.md" ] && c=".rabbits/runs/$SESSION.md 가 남아 있다 — 단계 6 최종 리포트 출력 후 이 마커를 삭제하고 런을 종료하라."
   report "1. 마커 잔존 — 런 종료 후 마커가 없어야 한다" "$c"
 fi
 
-# ── 2. 가드 off 상태 커밋 ───────────────────────────────────────────────────
-# run-waiting.md가 있는 동안은 종료 가드가 꺼진다. 그 구간의 커밋은 가드 없이 진행된 작업이다.
-# 재개하며 run-active.md로 원복하면 파일 증거가 사라지므로, 마커 본문에 누적된
-# `- 대기: <epoch>` / `- 재개: <epoch>` 이력을 1순위 근거로 쓴다(원복해도 줄은 남는다).
-spans=''
-if [ -n "$MARKER" ]; then
-  # 대기~재개 쌍을 한 줄씩 출력. 짝 없는 마지막 대기는 지금까지가 구간이다(아직 대기 중).
-  spans=$(awk -v now="$(date +%s)" '
-    /^- 대기:[ ]*[0-9]/ { sub(/^- 대기:[ ]*/, ""); w = $1 + 0; next }
-    /^- 재개:[ ]*[0-9]/ { sub(/^- 재개:[ ]*/, ""); if (w) { print w, $1 + 0; w = 0 } next }
-    END { if (w) print w, now }
-  ' "$MARKER")
-fi
-
-if [ -n "$spans" ]; then
-  c=''
-  hits=$(git -C "$REPO" log --format=%ct 2>/dev/null | awk -v spans="$(echo "$spans" | tr '
-' ';')" '
-    BEGIN { n = split(spans, L, ";") }
-    { for (i = 1; i <= n; i++) { split(L[i], p, " ")
-        if (p[1] != "" && $1 >= p[1] && $1 <= p[2]) { print "커밋 " $1 " (대기 구간 " p[1] "~" p[2] ")"; break } } }
-  ' || echo '')
-  [ -z "$hits" ] || c="마커 대기 이력과 겹치는 커밋이 있다 — 종료 가드가 꺼진 채 작업이 진행됐다.
-$hits
-재개 즉시 run-waiting.md를 run-active.md로 되돌린 뒤 커밋하라."
-  report "2. 가드 off 커밋 — 마커 대기 구간에 커밋이 없어야 한다" "$c"
-elif [ ! -e "$WAITING" ]; then
-  skip "2. 가드 off 커밋" "마커에 대기 이력이 없고 run-waiting.md도 없다 — 과거 대기 구간은 판정할 수 없다."
-else
-  # 폴백: 이력 없는 구형 마커. mtime으로만 판정한다.
-  c=''
-  wt=$(mtime "$WAITING")
-  ct=$(git -C "$REPO" log -1 --format=%ct 2>/dev/null || echo '')
-  if [ -z "$wt" ] || [ -z "$ct" ]; then
-    c="mtime 또는 최신 커밋 시각을 읽지 못했다 (mtime='$wt', commit='$ct')."
-  elif [ "$ct" -gt "$wt" ]; then
-    c="run-waiting.md 생성 이후($wt) 커밋($ct)이 있다 — 종료 가드가 꺼진 채 작업이 진행됐다.
-재개 즉시 run-waiting.md를 run-active.md로 되돌린 뒤 작업하라."
-  fi
-  report "2. 가드 off 커밋 — 대기 마커 이후 커밋이 없어야 한다(mtime 폴백)" "$c"
-fi
-
-# ── 2보조. 훅 차단 로그 — 마커 레저에 안 남는 "미신고 대기" ────────────
-# 대장이 run-waiting.md 개명 없이 턴을 끝내면 정의상 `- 대기:` 줄이 안 남아 검사 2가 못 잡는다.
-# 그때마다 Stop hook이 종료를 차단하며 epoch을 남기므로, 훅이 쓴 로그를 보조 근거로 읽는다
-# (훅은 하니스가 호출하므로 대장 자기신고인 마커 레저보다 신뢰할 수 있는 출처다).
-# 로그가 없거나 비면 구버전이거나 차단이 없었던 것이니 아무 말도 하지 않는다(기존 판정으로 폴백).
-# FAIL이 아니라 WARN인 이유: 발동은 위반의 "실행"이 아니라 "차단"이고 이미 지난 일이라 고쳐서
-# 없앨 수 없다 — FAIL로 두면 "게이트 FAIL 0" 조건이 로그 삭제(증거 인멸)를 유도한다.
-BLOCKLOG="$REPO/.rabbits/run-blocks.log"
+# ── 2. 가드 차단 ────────────────────────────────────────────────────────────
+# 종료 가드는 기다릴 워커가 없는데 턴을 끝내려 할 때만 막고 그때마다 <세션>.blocks 에 epoch을 남긴다.
+# 훅은 하니스가 호출하므로 대장 자기 신고보다 믿을 만한 출처다.
+# FAIL이 아니라 WARN인 이유: 차단은 위반의 "실행"이 아니라 이미 막힌 일이라 고쳐서 없앨 수 없다 —
+# FAIL로 두면 "게이트 FAIL 0" 조건이 로그 삭제(증거 인멸)를 유도한다. 은폐는 검사 4가 잡는다.
 BLOCKS_N=0
-if [ -s "$BLOCKLOG" ]; then
+if [ -z "$BLOCKLOG" ]; then
+  skip "2. 가드 차단" "--session 이 없어 차단 로그를 특정할 수 없다."
+elif [ ! -s "$BLOCKLOG" ]; then
+  report "2. 가드 차단 — 기다릴 워커 없이 턴을 끝내려 한 적이 없어야 한다" ""
+else
   n=$(grep -c '^[0-9]' "$BLOCKLOG" 2>/dev/null || true)
   # 숫자가 아니면 0으로 — set -e 아래에서 `[ "" -gt 0 ]`이 게이트 전체를 죽이지 않게 한다.
   case "$n" in ''|*[!0-9]*) n=0 ;; esac
   if [ "$n" -gt 0 ]; then
     last=$(grep '^[0-9]' "$BLOCKLOG" | tail -n 1)
-    c="대기 전환 없이 턴을 끝내 종료 가드가 ${n}회 차단했다 — 마커 레저에는 흔적이 없는 구간이다.
-완료알림·사용자 응답을 기다리며 턴을 끝낼 때는 run-active.md → run-waiting.md 개명 + touch +
-본문에 '- 대기: <epoch>' append, 재개 즉시 원복 + '- 재개: <epoch>' append하라.
-반복되면 보고서 '## 미해결'에 적어 드러내라(로그는 런 종료 후 다음 비런 턴에 훅이 자동으로 비운다)."
-    warn "2보조. 미신고 대기 — Stop hook 차단 ${n}회(마지막 $last)" "$c"
-    BLOCKS_N="$n"   # 검사 3이 보고서 은폐 여부를 판정할 때 쓴다
+    warn "2. 가드 차단 — ${n}회(마지막 $last)" "기다릴 워커도 없는데 턴을 끝내려 해 종료 가드가 ${n}회 막았다.
+사용자 답이 필요하면 AskUserQuestion 으로 묻고, 일이 남았으면 이어가라.
+보고서 '## 미해결'에 '가드 차단 N회'로 적어 드러내라(적으면 검사 4 통과, 숨기면 FAIL)."
+    BLOCKS_N="$n"
+  else
+    report "2. 가드 차단 — 기다릴 워커 없이 턴을 끝내려 한 적이 없어야 한다" ""
   fi
 fi
 
@@ -160,6 +128,10 @@ if [ -n "$MARKER" ]; then
 단계 6 '런 보고서 저장'을 마커 삭제 전에 끝내라."
     fi
   fi
+elif [ "$IN_RUN" = 1 ] && [ -n "$SESSION" ]; then
+  # 런 중인데 이 세션 마커가 없다. 최신 보고서로 폴백하면 마커 누락이 가려진다.
+  LEDGER_ERR="--in-run 인데 이 세션의 런 마커(.rabbits/runs/$SESSION.md)가 없다 — 단계 0 마커 생성을 빠뜨렸거나
+세션 ID 가 다르다. 마커를 만들고 \`- 보고서: <경로>\` 줄을 적어라."
 else
   # 마커가 없다 = 런 종료 후 무플래그 실행. 이때만 최신 보고서 폴백.
   REPORT=$(ls -t "$DIR"/*.md 2>/dev/null | head -n 1 || true)
@@ -226,21 +198,29 @@ else
   # 앵커 뒤 경계 — `## 미해결없음` 같은 유사 제목이 절을 대신 통과시키지 못하게 한다.
   grep -qE '^## 미해결([[:space:]]|$)' "$REPORT" || c="$base에 '## 미해결' 절이 없다 — 남은 것이 없어도
 '## 미해결' 절을 만들고 '없음'이라고 적어라(은폐와 구분하기 위해 절 자체는 필수)."
-  # 2보조 WARN이 떴는데 보고서가 침묵하면 은폐다 — WARN 단독으로는 아무것도 강제하지 못한다.
+  # 검사 2 WARN이 떴는데 보고서가 침묵하면 은폐다 — WARN 단독으로는 아무것도 강제하지 못한다.
   # 신고하면 PASS, 숨기면 FAIL이라 로그를 지울 유인이 생기지 않는다(감사 제안).
   # 검사 3이 아니라 여기 둔 이유: 검사 3은 감사 미발동 런에서 SKIP으로 빠져 은폐 검사가 안 돈다.
-  if [ "${BLOCKS_N:-0}" -gt 0 ] && ! grep -q '미신고 대기' "$REPORT"; then
+  if [ "${BLOCKS_N:-0}" -gt 0 ] && ! grep -q '가드 차단' "$REPORT"; then
     c="$c
-2보조가 미신고 대기 ${BLOCKS_N}회를 잡았는데 보고서에 '미신고 대기' 언급이 없다 —
+검사 2가 가드 차단 ${BLOCKS_N}회를 잡았는데 보고서에 '가드 차단' 언급이 없다 —
 '## 미해결'에 몇 회였는지 적어 드러내라(적으면 통과, 숨기면 이 검사가 FAIL이다)."
   fi
-  report "4. 미해결 절·미신고 대기 신고 — 빠진 것 없이 적어야 한다" "$c"
+  report "4. 미해결 절·가드 차단 신고 — 빠진 것 없이 적어야 한다" "$c"
 fi
+
+# ── 5~6. rabbits 플러그인 리포 전용 ─────────────────────────────────────────
+# README 한/영 수치와 미푸시 커밋은 플러그인 리포를 고치는 런의 규약이다. 다른 프로젝트 런에 적용하면
+# 그 런과 무관한 FAIL이 난다(보고서 실증: 타 프로젝트 런에서 플러그인 리포 미푸시 커밋으로 FAIL).
+IS_RABBITS=0
+grep -q '"name"[ ]*:[ ]*"rabbits"' "$REPO/.claude-plugin/plugin.json" 2>/dev/null && IS_RABBITS=1
 
 # ── 5. README 드리프트 ──────────────────────────────────────────────────────
 # 한글판만 고치고 영문판을 방치해 공개 리포에 거짓 진술이 나간 전례가 있다.
 # ponytail: 팀 프리셋 수·아키타입 총계/코어/확장 4종 수치만 대조한다. 산문 대조는 사람 몫.
-if [ ! -f "$REPO/README.md" ] || [ ! -f "$REPO/README.en.md" ]; then
+if [ "$IS_RABBITS" = 0 ]; then
+  skip "5. README 드리프트" "대상이 rabbits 플러그인 리포가 아니다 — 대조 대상이 아니다."
+elif [ ! -f "$REPO/README.md" ] || [ ! -f "$REPO/README.en.md" ]; then
   skip "5. README 드리프트" "README.md 또는 README.en.md가 없다 — 대조 대상이 아니다."
 else
   c=''
@@ -269,7 +249,9 @@ $label 표기 불일치 — README.md='$ko' / README.en.md='$en'. 양쪽을 같�
 fi
 
 # ── 6. 미푸시 커밋 ──────────────────────────────────────────────────────────
-if ! git -C "$REPO" rev-parse --abbrev-ref '@{u}' > /dev/null 2>&1; then
+if [ "$IS_RABBITS" = 0 ]; then
+  skip "6. 미푸시 커밋·미커밋 변경" "대상이 rabbits 플러그인 리포가 아니다 — 푸시 여부는 그 프로젝트의 정책이다."
+elif ! git -C "$REPO" rev-parse --abbrev-ref '@{u}' > /dev/null 2>&1; then
   skip "6. 미푸시 커밋·미커밋 변경" "upstream이 설정돼 있지 않다 — 원격 대조 불가."
 else
   c=''

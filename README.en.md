@@ -11,6 +11,24 @@ dispatches, supervises, reviews, and coaches disposable, purpose-built expert **
 > The lead rabbit takes the task → assembles a team → dispatches it → supervises, reviews, and
 > sends work back for rework → finishes and reports.
 
+## When to use it
+
+Two questions decide it. Is it settled what to build? Can you tell it is done from a command or a
+file's state? If either answer is no, rabbits fits. If both are yes, dogs (`dogs:run`), which keeps a
+judgment record, fits better. For a change to one or two files, worker start-up costs more than the
+work, so use neither. The table below is a starting point.
+
+| Work | Start with | When it changes |
+|---|---|---|
+| Investigating a bug with an unknown cause | rabbits | dogs, if a reproduction test exists and the fix scope is settled |
+| Design exploration, comparing approaches | rabbits | |
+| Research, competitor comparison | rabbits | |
+| Security, license, and quality reviews | rabbits | dogs, for checks that end with static analysis or a policy check |
+| Writing and organizing documents | rabbits | dogs, for bulk cleanups verified by link or schema checks |
+| Working through the backlog | rabbits | |
+| Implementing a feature with settled completion criteria | dogs | |
+| Consistent changes across many files | dogs | |
+
 ## Installation
 
 ```bash
@@ -87,8 +105,8 @@ next session. It runs only when you invoke it, never on its own during a run.
 | 0 | Intake | Pin down the goal and the definition of success; write the intent record |
 | 1 | Planning | Decompose into subtasks → mini DAG + completion criteria; auto-decide specialist teams; build the roster; assemble the context pack once |
 | 2 | Cast | 101 archetypes (8 core + 93 extended, lazy-loaded by domain) + 6 specialist team presets (tech, legal, security, search, QA, QC) + model and time-limit assignment |
-| 3 | Dispatch | Independent tasks run in parallel, dependent tasks run sequentially, long-running tasks run in background |
-| 3.5 | Supervision | maxTurns as a first-line guard + time-limit watchdog + swap in a replacement worker if stalled |
+| 3 | Dispatch | Independent tasks run in parallel, dependent tasks run sequentially, every worker runs in the background |
+| 3.5 | Supervision | Completion notifications + time-limit watchdog + swap in a replacement worker if stalled |
 | 4 | Review | Worker `rabbits-result` block (self_check) + rubric → PASS / REVISE / ESCALATE |
 | 5 | Feedback | Coaching for rework → if that fails, the escalation ladder (no giving up) |
 | 6 | Report | Integrate deliverables + final report |
@@ -155,8 +173,10 @@ rabbits/
 ├── agents/
 │   └── rabbits-readonly.md  # Shared profile for read-only workers (narrowed tools → smaller prefill)
 ├── hooks/
-│   ├── hooks.json        # Registers the Stop event → stop guard
-│   └── stop-guard.sh     # Marker-based exit blocking (POSIX sh)
+│   ├── hooks.json        # Registers Stop, SubagentStop, SessionStart(compact|resume)
+│   ├── stop-guard.sh     # Per-session marker stop guard — passes while workers are pending (POSIX sh)
+│   ├── result-gate.sh    # Result block gate — sends a worker back once if its reply lacks the block
+│   └── recover.sh        # Injects a run recovery context after compaction or resume
 ├── skills/
 │   ├── retro/SKILL.md    # Retrospective — extracts patterns and weaknesses from run reports
 │   ├── setup/SKILL.md    # Project setup — detects the stack, then enables plugins in project scope
@@ -219,23 +239,49 @@ without it nothing is attached.
       `/rabbits:run` with no arguments → topmost pending item adopted (n/m narration) → consumed as
       `- [x]` on completion (unresolved runs annotated with a reason) → chaining continues with the
       marker kept alive while items remain — confirmed empirically.
+- [x] **T11 — per-session guard, result block gate, recovery hook (0.37.0)**: in two sessions on the
+      same repo, one session's run marker must not block the other from ending; ending a turn while
+      workers are pending must not be blocked, and the completion notification must resume the run;
+      a worker told to omit the block must add it after one re-request; the recovery context must
+      arrive after `/compact` and `--resume`; ending a turn with no pending worker must be blocked
+      with a reason that points to AskUserQuestion. (Replaces T6 stop guard and T9 waiting protocol.
+      The waiting protocol was removed in 0.37.0.)
+      Result (2.1.280, two interactive sessions): no cross-session blocks, no block while workers ran,
+      the gate sent the worker back once and the block was added, the model quoted the recovery context
+      after compaction, and a turn end with no worker was blocked. One false block happened when a
+      worker's completion notification was still queued, so a queue check was added. With interactive
+      `--resume` the hook ran but its context did not reach the model (2 of 2; `-p` resume worked). After
+      a resume the stop guard blocks the first turn end, which brings the run back up.
 
 ## Constraints / notes
 
 - This skill must run in the **main session** (never inside a fork or subagent) — it needs to be
   able to spawn workers via the Agent tool.
-- Worker status polling and forced termination (TaskList/TaskGet/TaskStop), as well as mid-run
-  nudges, depend on the harness — even where those aren't available, supervision still holds up via
-  maxTurns + completion notifications + swapping in replacement workers.
+- In an interactive session every worker runs in the background and its completion notification
+  wakes the lead's turn. A stalled worker is stopped with `TaskStop`, or a replacement worker is
+  dispatched in parallel. The Agent call has no maxTurns argument.
 - Run caps: 12 workers (18 max), 2 coaching rounds — once exhausted, it reports the best result
   obtained.
-- **Stop hook stop guard**: while the `.rabbits/run-active.md` marker exists, it blocks exit and
-  forces continuation through to Stage 6 completion (the harness's 8-block cap prevents an infinite
-  loop). The marker is listed in `.gitignore` (never commit it) — a leftover marker from a crash
-  that gets committed would block every session across the whole repo. On Windows without Git Bash,
-  the PowerShell fallback means the sh script may not run — in that case the guard simply doesn't
-  activate (a known limitation). When ending a turn to wait for a background worker's completion
-  notification, rename the marker to `run-waiting.md` to pause the guard temporarily.
+- **Per-session run marker and stop guard**: Stage 0 creates `.rabbits/runs/<session id>.md` and
+  Stage 6 deletes it. The Stop hook reads the session_id from stdin, looks only at that session's
+  marker, and lets the turn end while background workers or workflows are pending or a completion
+  notification is still queued (the notification wakes the session again). If the lead tries to end the turn with nothing pending, the
+  hook blocks it and records the attempt in `<session>.blocks` (the harness ignores the hook after 8
+  consecutive blocks). Several sessions on the same repo no longer block each other. A forked session
+  gets a new session id and does not take over the run. `.rabbits/runs/` is in `.gitignore` (never
+  commit it). On Windows without Git Bash the sh hooks may not run (a known limitation).
+- **Result block gate**: during this session's run, if a worker whose delegation prompt carries the
+  `rabbits-result` contract finishes without the block, the SubagentStop hook sends it back once to add
+  the block. The second stop passes, and Stage 4 handles a still-missing block as REVISE.
+- **Recovery hook**: after auto-compaction only the first 5,000 tokens of a skill are re-attached.
+  When the SessionStart(compact|resume) hook sees this session's run marker, it injects the fact that
+  a run is in progress together with the marker, report, and skill paths. The instruction at the top
+  of SKILL.md then has the lead re-read the skill. With interactive `--resume` the context may not
+  reach the model.
+- **Self-audit target**: call it as `self-audit.sh --repo <target project> --session <session id>`.
+  The previous version resolved the repo from the script's own location and audited the plugin repo
+  during runs in other projects. The README drift and unpushed-commit checks run only when the target
+  is the rabbits repo itself.
 - **Knowledge base integration (optional)**: if a technical know-how index is injected into the
   session context, relevant know-how is folded into the Stage 1 pack, and if a recording skill is
   also available, verified new know-how gets recorded in Stage 6 — with neither present, this simply

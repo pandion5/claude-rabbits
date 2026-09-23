@@ -1,9 +1,6 @@
-# rabbits 런 마커 — 세션 로컬, 크래시 잔존분이 커밋돼 리포 전체 세션을 차단하는 것을 방지
-.rabbits/run-active.md
-.rabbits/run-waiting.md
-
-# Stop hook 차단 로그 — 세션 로컬 증거(self-audit 검사 2가 읽는다), 커밋 대상 아님
-.rabbits/run-blocks.log
+# rabbits 세션별 런 마커(<세션>.md)와 가드 차단 로그(<세션>.blocks) — 세션 로컬 상태.
+# 크래시 잔존분이 커밋되면 같은 세션 ID 로 재개할 때 엉뚱한 런이 살아난다. 커밋 대상 아님.
+.rabbits/runs/
 
 # rabbits 워크트리 격리 — 워커 전용 임시 워크트리, embedded repo 스테이징 방지
 .claude/worktrees/

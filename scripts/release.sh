@@ -70,7 +70,7 @@ echo "  ✓ 브랜치: main"
 # ② 런 마커는 절대 커밋 금지 — 대상 목록에 섞였는지 검사
 for f in "$@"; do
   case "$f" in
-    *run-active.md|*run-waiting.md) fail "런 마커가 대상 목록에 있다: $f (마커는 커밋 금지)" ;;
+    *.rabbits/runs/*) fail "런 마커가 대상 목록에 있다: $f (마커는 커밋 금지)" ;;
   esac
 done
 echo "  ✓ 런 마커 없음"

@@ -23,8 +23,8 @@
 
 - Stop hook 마커 부재/존재 2케이스 계약 — 마커 없으면 stdout 빈 값·exit 0, 마커 있으면 decision=="block"이고 reason 비어있지 않은 유효 JSON·exit 0 (검증: CLAUDE_PROJECT_DIR을 임시 디렉토리로 지정해 `sh hooks/stop-guard.sh` 실행 후 stdout을 `python -c "import json,sys; json.load(sys.stdin)"`로 파싱하고 exit code 확인)
 - hooks.json Stop 이벤트 스키마 정합 — hooks.Stop[0].hooks[0].type이 "command"이고 command가 stop-guard.sh를 가리키는 훅이 등록되어 있음 (검증: `python -c "import json; d=json.load(open('hooks/hooks.json',encoding='utf-8')); assert d['hooks']['Stop'][0]['hooks'][0]['type']=='command'"`)
-- SKILL.md 마커 생명주기 지시 존재 — 단계 0에 `.rabbits/run-active.md` 생성(Write) 지시, 단계 6에 최종 리포트 후 마커 삭제 지시가 명시되어 하니스 종료 차단을 오케스트레이터가 스스로 해제 가능 (검증: `grep -c '런 마커 생성' skills/run/SKILL.md` = 1 + `awk '/^## 단계 6 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '런 마커 삭제'` = 1. 주의: 단계 6 삭제 불릿은 실재 파일명을 확인하라는 문구라 `run-active.md` 리터럴을 포함하지 않는다 — 파일명 grep으로 찾지 말 것)
-- SKILL.md에 마커 이동·삭제 금지 규칙이 있고 허용 예외가 구분돼 읽히는가 — 단계 0 마커 불릿 뒤에 금지 규칙 1건이 있고, 같은 불릿 안에서 허용 경로 2종("단계 6" 삭제 / `run-waiting.md` 개명)이 언급된다 (검증: `grep -c "마커 이동·삭제 금지" skills/run/SKILL.md` = 1 + `awk '/마커 이동·삭제 금지/,/^$/' skills/run/SKILL.md | grep -oE "단계 6|run-waiting.md" | wc -l` = 2)
+- SKILL.md 마커 생명주기 지시 존재 — 단계 0에 세션별 마커 `.rabbits/runs/${CLAUDE_SESSION_ID}.md` 생성(Write) 지시, 단계 6에 최종 리포트 후 같은 경로 삭제 지시가 명시되어 하니스 종료 차단을 오케스트레이터가 스스로 해제 가능 (검증: `grep -c '런 마커 생성' skills/run/SKILL.md` = 1 + `grep -c 'runs/${CLAUDE_SESSION_ID}.md' skills/run/SKILL.md` >= 2 + `awk '/^## 단계 6 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '런 마커 삭제'` = 1)
+- SKILL.md에 마커 이동·삭제 금지 규칙이 있고 허용 예외가 단계 6 삭제 하나로 읽히는가 — 대기 전환 개명 규약은 0.37.0에서 없앴으므로 흔적이 남으면 안 된다 (검증: `grep -c "마커 이동·삭제 금지" skills/run/SKILL.md` = 1 + `awk '/마커 이동·삭제 금지/,/^$/' skills/run/SKILL.md | grep -c "단계 6"` >= 1 + `grep -c "run-waiting" skills/run/SKILL.md` = 0)
 
 ## 지식베이스 연동
 
@@ -38,7 +38,7 @@
 
 ## Stop hook 대기 규약
 
-- Stop hook 대기 규약이 SKILL.md 단계 3.5에 양방향(개명·원복)으로 존재하고 .gitignore가 두 마커(run-active.md·run-waiting.md)를 모두 커버하는가 — 대기 시작 시 run-active.md→run-waiting.md 개명, 재개 시 run-waiting.md→run-active.md 원복 (검증: 단계 3.5 절 텍스트를 개행·연속 공백 정규화 후 "run-active.md ... run-waiting.md ... 개명" 정규식과 "run-waiting.md ... run-active.md ... 원복" 정규식 각각 매치 확인 + `grep -n "run-active.md\|run-waiting.md" .gitignore`로 두 마커 라인 존재 확인; 추가로 스크래치 임시 디렉토리에 .rabbits/run-waiting.md만 두고 run-active.md는 없는 상태에서 `CLAUDE_PROJECT_DIR=<임시디렉토리> sh hooks/stop-guard.sh` 실행 후 stdout이 빈 값이고 exit 0인지 확인 — 대기 중 가드가 정상 통과함을 실측) — 양방향 정규식 매치, .gitignore 2줄, 가드 무출력·exit 0
+- 종료 가드가 세션별 마커만 보고 백그라운드 워커 대기 중에는 통과시키며 .gitignore가 마커 디렉토리를 덮는가 — 0.37.0에서 run-waiting.md 개명 규약을 없애고 Stop 입력의 session_id·background_tasks로 대체했다 (검증: `sh scripts/behavior-check.sh`의 사이클 1 PASS — 대기 없음 block·워커 대기 통과·알림 대기열 통과·다른 세션 통과·삭제 통과 + `grep -c '^.rabbits/runs/$' .gitignore` = 1 + `awk '/^## 단계 3.5/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '그냥 턴을 끝낸다'` = 1)
 
 ## 백로그 규약
 
@@ -90,12 +90,12 @@
 
 ## 릴리스 파이프라인
 
-- scripts/release.sh가 실재하고 사전 검증 5종·드라이런·안전 규칙이 구현돼 있는가 — 파일 존재 + ①브랜치 main 확인 ②마커(run-active/run-waiting) 스테이징 차단 ③README 중복 행 검출 ④plugin.json 버전 검사 ⑤고정 문구 102 카운트 5종이 본문에 나타나고 `--dry-run` 분기 존재, 파괴적 명령(`rm -rf`·`reset --hard`·`push --force`·`push -f`·`clean -fd`)은 0건 (검증: `test -f scripts/release.sh` 후 `grep -cE "main|run-active|seen\[|version|102"` 각 ≥1 — 중복 검출은 awk seen[] 구현(uniq -d 아님) + `grep -nE 'rm -rf|reset --hard|push --force|push -f|clean -fd' scripts/release.sh` 무출력)
+- scripts/release.sh가 실재하고 사전 검증 5종·드라이런·안전 규칙이 구현돼 있는가 — 파일 존재 + ①브랜치 main 확인 ②런 마커(`.rabbits/runs/`) 스테이징 차단 ③README 중복 행 검출 ④plugin.json 버전 검사 ⑤고정 문구 102 카운트 5종이 본문에 나타나고 `--dry-run` 분기 존재, 파괴적 명령(`rm -rf`·`reset --hard`·`push --force`·`push -f`·`clean -fd`)은 0건 (검증: `test -f scripts/release.sh` 후 `grep -cE "main|rabbits/runs|seen\[|version|102"` 각 ≥1 — 중복 검출은 awk seen[] 구현(uniq -d 아님) + `grep -nE 'rm -rf|reset --hard|push --force|push -f|clean -fd' scripts/release.sh` 무출력)
 - 릴리스 스크립트가 드라이런에서 실제 검증을 수행하고 리포를 변경하지 않는가 — `sh scripts/release.sh --dry-run <현재버전> "test" README.md` 실행 시(**파일 인자 필수** — 없고 스테이징도 비면 "대상 파일이 없다"로 EXIT=1) 5검증 결과를 출력하고 EXIT=0, plugin.json version은 실행 전후 동일 (검증: 실행 전후 `grep version .claude-plugin/plugin.json` 비교 + `git status --porcelain` 신규 변경 0건)
 
 ## 행위 검증
 
-- 정적 문자열 검사가 아니라 실제 동작이 계약대로인가 — `sh scripts/behavior-check.sh` 1회 실행으로 3사이클이 전부 `[PASS]`이고 EXIT=0 (①마커 사이클: 임시 프로젝트에 `.rabbits/run-active.md`를 두면 stop-guard가 `decision=block`·비어있지 않은 `reason`·exit 0, `run-waiting.md`로 개명하면 무출력·exit 0(대기 규약), 삭제하면 무출력·exit 0 ②백로그 소비: 미완료 3건 중 최상단 1건만 `- [x]`로 바뀌어 잔여 2건, 미해결 케이스는 `- [x] 항목 (미해결: 사유)` 형식, 대상 외 행은 원문 대조로 바이트 불변 ③릴리스 가드: `release.sh --dry-run <현재버전> "..." README.md`가 EXIT=0, 대상에 `.rabbits/run-active.md`를 섞으면 "런 마커가 대상 목록에 있다"로 EXIT≠0). 임시물은 `mktemp -d` 하위에만 만들고 trap으로 정리하므로 실행 후 `git status --porcelain` 신규 변경 0건
+- 정적 문자열 검사가 아니라 실제 동작이 계약대로인가 — `sh scripts/behavior-check.sh` 1회 실행으로 4사이클이 전부 `[PASS]`이고 EXIT=0 (①세션별 마커 가드: 임시 프로젝트 `.rabbits/runs/S1.md`가 있을 때 세션 S1·대기 없음이면 `decision=block`·비어있지 않은 `reason`·exit 0·차단 로그 1줄, 워커 대기 중이거나 세션 기록의 마지막 queue-operation이 enqueue면 무출력(dequeue 뒤에는 block), 세션 S2면 무출력, 마커를 지우면 무출력이고 차단 로그도 지워진다 ②백로그 소비: 미완료 3건 중 최상단 1건만 `- [x]`로 바뀌어 잔여 2건, 미해결 케이스는 `- [x] 항목 (미해결: 사유)` 형식, 대상 외 행은 원문 대조로 바이트 불변 ③릴리스 가드: `release.sh --dry-run <현재버전> "..." README.md`가 EXIT=0, 대상에 `.rabbits/runs/S1.md`를 섞으면 "런 마커가 대상 목록에 있다"로 EXIT≠0 ④결과 블록 게이트·복구 훅: 블록 없는 계약 워커는 block, 블록 있음·두 번째 멈춤·계약 없는 에이전트·런 없음은 무출력, 복구 훅은 이 세션 마커가 있을 때만 SKILL.md 경로가 든 문맥). 임시물은 `mktemp -d` 하위에만 만들고 trap으로 정리하므로 실행 후 `git status --porcelain` 신규 변경 0건
 
 ## 리포트 독립 감사
 
@@ -130,17 +130,17 @@
 - `agents/rabbits-readonly.md`가 실재하고 frontmatter 3필드(`name`·`description`·`tools: Read, Grep, Glob, Bash`)를 갖췄으며, 단계 2 구간에 이 프로필 파견 규칙과 단서 3종(변경 워커 불가·스킬 호출 시 불가·구버전 세션 폴백)이 모두 있는가 — frontmatter 3패턴 전부 ≥1건, 단계 2 구간 4패턴 전부 ≥1건 (검증: `test -f agents/rabbits-readonly.md && grep -coE '^name: rabbits-readonly$|^description: .+|^tools: Read, Grep, Glob, Bash$' agents/rabbits-readonly.md` = 3 + `S=$(awk '/^## 단계 2 /{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | tr '\n' ' '); printf '%s' "$S" | grep -oE 'rabbits-readonly|Write/Edit 없음|스킬 호출|구버전 세션' | sort -u | wc -l` = 4. 대조군: 같은 awk를 단계 3에 적용하면 0건)
 
 ## 런 자기 감사 스크립트
-- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 off 커밋·보고서 서식·감사 결과 절·미해결 절·README 드리프트·미푸시·미커밋 변경)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `sh scripts/self-audit.sh --in-run 2>&1 | grep -oE '^\[(PASS|FAIL|SKIP)\] [1-6]\. [^—]+' | sed 's/^\[[A-Z]*\] //' | sort` 결과가 아래 6줄과 **축자 일치**해야 한다 — 선두 숫자만 세면 이름·조건이 바뀌어도 통과하므로 **이름까지** 대조한다: `1. 마커 잔존` / `2. 가드 off 커밋` / `3. 보고서 서식·감사 결과 절` / `4. 미해결 절` / `5. README 드리프트` / `6. 미푸시 커밋·미커밋 변경`. 검사명을 바꾸면 이 항목도 함께 갱신하라(그게 드리프트 감지의 요점이다). 추가: `grep -c '삭제 \*\*직전\*\*' skills/run/SKILL.md` >= 1 + `grep -c '삭제 \*\*직후\*\*' skills/run/SKILL.md` >= 1 로 전후 규칙 둘 다 확인)
+- `scripts/self-audit.sh`가 실재하고 6검사(마커 잔존·가드 차단·보고서 서식·감사 결과 절·미해결 절·README 드리프트·미푸시·미커밋 변경)가 모두 판정을 출력하며, 단계 6에 마커 삭제 전후 실행 규칙이 있는가 — 문서에만 적힌 규칙이 5회 연속 안 먹혀 스크립트로 내린 항목이다 (검증: `out=$(sh scripts/self-audit.sh --in-run 2>&1)` 뒤 아래 6개 머리말이 각각 1줄씩 있어야 한다 — `printf '%s' "$out" | grep -cE '^\[(PASS|FAIL|SKIP|WARN)\] <머리말>'` = 1: `1\. 마커 잔존` / `2\. 가드 차단` / `3\. 보고서 서식·감사 결과 절` / `4\. 미해결 절` / `5\. README 드리프트` / `6\. 미푸시 커밋·미커밋 변경`. 검사명을 바꾸면 이 항목도 함께 갱신하라(그게 드리프트 감지의 요점이다). 추가: `grep -c '삭제 \*\*직전\*\*' skills/run/SKILL.md` >= 1 + `grep -c '삭제 \*\*직후\*\*' skills/run/SKILL.md` >= 1 로 전후 규칙 둘 다 확인)
 
 ## 마커 런 레저
 
-- 마커가 런 레저로 규정되고 self-audit이 그걸 읽는가 — 단계 0에 `- 보고서:` 경로 기입, 단계 3.5에 `- 대기:`/`- 재개:` epoch 누적이 지시돼 있고, 스크립트가 세 키를 모두 파싱해야 한다 (검증: `awk '/^## 단계 0/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '보고서:'` >= 1 + `awk '/^## 단계 3.5/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -coE '대기:|재개:'` >= 1 + `grep -coE '^\s*- 보고서:|- 대기:|- 재개:' scripts/self-audit.sh` >= 3)
+- 마커가 런 레저로 규정되고 self-audit이 세션별로 그걸 읽는가 — 단계 0에 `- 보고서:` 경로 기입, self-audit은 `--session`으로 `.rabbits/runs/<세션>.md`를 찾아 `- 보고서:` 줄을 파싱한다 (검증: `awk '/^## 단계 0/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '보고서:'` >= 1 + `grep -c 'RUNS/$SESSION.md' scripts/self-audit.sh` >= 1 + `grep -c '보고서: \*' scripts/self-audit.sh` >= 1)
 - 보고서 서식 부재가 SKIP이 아니라 FAIL인가 — 표를 안 쓰면 감사를 면제받는 경로를 막은 항목이다. 실측 39건 중 10건이 이 경로로 검사를 빠져나갔다 (검증: 임시 디렉토리에 `## 워커 메타` 절 없는 보고서와 마커를 만들어 `sh scripts/self-audit.sh --in-run` 실행 → 검사 3이 `[FAIL]`이고 사유에 '워커 표'가 언급되는지 확인. 대상 리포에서 실행하지 말 것)
 
 ## 훅 차단 로그
 
-- Stop hook이 차단할 때 `.rabbits/run-blocks.log`에 epoch을 남기고 가드 동작은 불변인가 — 마커 레저(대장 자기신고)가 못 잡는 "미신고 대기"의 유일한 증거다 (검증: 임시 프로젝트에서 `CLAUDE_PROJECT_DIR=<tmp> sh hooks/stop-guard.sh`를 마커 없음/run-active.md 존재 2케이스로 실행 → 전자는 무출력·로그 미생성, 후자는 `decision:block` 출력 + 로그 1줄 증가, 양쪽 exit 0. 대상 리포에서 실행하지 말 것)
-- 미신고 대기를 숨기면 검사 4가 FAIL인가 — WARN 단독으로는 강제력이 없어 검사 4에 연결했다. 신고하면 PASS라 로그를 지울 유인이 생기지 않는다 (검증: 임시 리포에 `run-blocks.log` 2줄 + `## 미해결` 있는 보고서로 `--in-run` 실행 → 보고서에 '미신고 대기' 문자열이 없으면 `[FAIL] 4`, 추가하면 `[PASS] 4`)
+- 종료 가드가 차단할 때 `.rabbits/runs/<세션>.blocks`에 epoch을 남기고 마커 삭제 뒤 첫 종료에서 로그를 지우는가 — 대장 자기 신고가 못 잡는 가드 차단의 유일한 증거다 (검증: behavior-check 사이클 1의 '차단 로그 1줄'과 '지난 런 차단 로그가 지워지지 않았다' 두 판정이 모두 통과, 즉 사이클 1 PASS. 대상 리포에서 실행하지 말 것)
+- 가드 차단을 숨기면 검사 4가 FAIL인가 — WARN 단독으로는 강제력이 없어 검사 4에 연결했다. 신고하면 PASS라 로그를 지울 유인이 생기지 않는다 (검증: 임시 git 리포에 `.rabbits/runs/S.md`(`- 보고서: <보고서 경로>` 줄 포함)와 `.rabbits/runs/S.blocks` 2줄, `## 워커 메타` 표와 `## 미해결` 절이 있는 보고서를 두고 `sh scripts/self-audit.sh --repo <임시 리포> --session S --in-run` 실행 → 보고서에 '가드 차단' 문자열이 없으면 `[FAIL] 4`, 추가하면 `[PASS] 4`)
 - 훅 수정은 자기 자신의 런을 관측할 수 없다는 한계가 문서에 남아 있는가 — 런타임은 워킹트리가 아니라 `~/.claude/plugins/cache/<플러그인>/<버전>/`의 스냅샷을 실행하므로 훅 변경은 릴리스·캐시 갱신 뒤부터 유효하다 (검증: `grep -c '캐시' skills/run/SKILL.md` >= 1)
 
 ## 릴리스 트레일러
@@ -154,4 +154,8 @@
 - 승인 게이트를 두지 않는다는 단서가 붙어 있는가 — 철칙 1(완전 자율)과 충돌하지 않게 명시한 항목이다. 이 문구가 빠지면 대장이 사용자 승인을 기다리며 멈춘다 (검증: `awk '/^## 단계 0/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '승인을 기다리지 않는다'` = 1)
 - 의도 파일 경로가 마커 레저와 런 보고서 양쪽에 연결되는가 — 단계 0에 `- 의도:` 기입 지시, 단계 6에 보고서 첫 줄 링크 지시가 있어야 한다. 한쪽만 있으면 의도 파일이 고아가 된다 (검증: `awk '/^## 단계 0/{f=1;next} f&&/^## /{exit} f' skills/run/SKILL.md | grep -c '의도:'` >= 1 + `grep -c '의도에서 보고서까지' skills/run/SKILL.md` = 1)
 - README 한/영 단계표 0단계 설명이 양쪽 다 의도 기록을 언급하는가 — 한글판만 고쳐 영문판에 거짓 진술을 출하한 전례가 있다 (검증: `grep -c '의도 기록' README.md` >= 1 + `grep -ci 'intent record' README.en.md` >= 1)
-
+- 결과 블록 게이트가 등록돼 있고 계약 워커만 한 번 되돌리는가 — 형식 누락이 REVISE 사유의 절반이던 런(백로그 22)을 하니스에서 막는다 (검증: `grep -c 'result-gate.sh' hooks/hooks.json` = 1 + behavior-check 사이클 4 PASS)
+- 복구 훅이 compact·resume에만 걸리고 이 세션 마커가 있을 때만 런 진행 사실과 SKILL.md 경로를 문맥으로 내는가 — 압축 뒤 스킬은 앞 5,000토큰만 남는다. 문구는 명령형이 아닌 사실 서술이어야 한다(공식 문서: 명령형은 프롬프트 주입 방어에 걸릴 수 있다) (검증: `grep -c '"matcher": "compact|resume"' hooks/hooks.json` = 1 + behavior-check 사이클 4 PASS)
+- self-audit이 대상 프로젝트를 `--repo`로 받고 rabbits 리포가 아니면 검사 5·6을 건너뛰는가 — 스크립트 위치로 대상을 잡던 이전 판은 다른 프로젝트 런에서 플러그인 리포를 감사했다 (검증: rabbits가 아닌 임시 git 리포로 `sh scripts/self-audit.sh --repo <임시 리포> --session X --in-run` 실행 시 `[SKIP] 5.`와 `[SKIP] 6.` 두 줄에 '대상이 rabbits 플러그인 리포가 아니다' 사유)
+- run 스킬 frontmatter에 용도 구분이 있는가 — description 첫 문장이 용도이고 when_to_use가 dogs:run과 직접 처리를 가른다. 두 필드 합계는 스킬 목록 상한 1,536자 이내 (검증: `grep -c '^when_to_use:' skills/run/SKILL.md` = 1 + `grep -c 'dogs:run' skills/run/SKILL.md` >= 1 + `sed -n '/^description:/p;/^when_to_use:/p' skills/run/SKILL.md | wc -m` <= 1600)
+- 훅 명령이 스크립트를 sh 로 부르는가 — git 에 실행 비트가 없어 맥·리눅스에서 직접 실행하면 권한 오류로 훅이 돌지 않는다 (검증: `grep -c '"command": "sh \\"${CLAUDE_PLUGIN_ROOT}/hooks/' hooks/hooks.json` = 3)
